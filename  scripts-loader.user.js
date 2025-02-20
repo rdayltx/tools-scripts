@@ -189,14 +189,41 @@ function criarInterface() {
   document.body.appendChild(div);
 }
 
+// Função para carregar scripts
+// Função para carregar scripts
 function loadScript(url) {
+  const now = Date.now();
+  const cacheKey = `script_${url}`;
+  const cachedScript = GM_getValue(cacheKey);
+
+  if (cachedScript) {
+    const { timestamp, script } = cachedScript;
+
+    // Verifica se o script está expirado (mais de 8 horas)
+    if (now - timestamp < 8 * 60 * 60 * 1000) {
+      // Executa o script armazenado
+      const scriptElement = document.createElement("script");
+      scriptElement.textContent = script;
+      document.head.appendChild(scriptElement);
+      console.log(`Script carregado do cache: ${url}`);
+      return;
+    }
+  }
+
+  // Se o script não estiver no cache ou estiver expirado, faz uma nova requisição
   GM_xmlhttpRequest({
     method: "GET",
     url: url,
     onload: function (response) {
-      const script = document.createElement("script");
-      script.textContent = response.responseText;
-      document.head.appendChild(script);
+      const script = response.responseText;
+
+      // Armazena o script usando GM_setValue com o carimbo de data/hora atual
+      GM_setValue(cacheKey, { timestamp: now, script });
+
+      // Executa o script
+      const scriptElement = document.createElement("script");
+      scriptElement.textContent = script;
+      document.head.appendChild(scriptElement);
       console.log(`Script carregado e executado: ${url}`);
     },
     onerror: function (error) {
@@ -245,6 +272,17 @@ function executeConfiguredFeatures() {
         );
       },
     },
+
+    {
+      condition:
+        getConfig("configAtivaAdS") && hostname === "associados.amazon.com.br",
+      func: () => {
+        console.log("Executando script de busca avançada Amazon Associates");
+        loadScript(
+          "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/amz-associates-date-set.user.js"
+        );
+      },
+    },
   ];
 
   siteConfigs.forEach((config) => {
@@ -259,6 +297,7 @@ function executeConfiguredFeatures() {
     }
   });
 }
+
 // Executar funções quando o DOM estiver completamente carregado
 document.addEventListener("DOMContentLoaded", executeConfiguredFeatures);
 // Register menu command
