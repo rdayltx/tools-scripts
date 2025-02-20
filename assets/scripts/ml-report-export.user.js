@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name        New script
+// @name          ML Report Export
 // @namespace     Pobre's Toolbox
 // @version       2.6
-// @icon          https://raw.githubusercontent.com/rdayltx/userscripts/master/pobre_tools.ico
+// @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Ferramentas do analista
 // @author        DayLight
 //
@@ -10,10 +10,10 @@
 //
 // @run-at        document-end
 //
-// @grant        GM_registerMenuCommand
-// @grant        GM_addStyle
-// @grant        GM_setValue
-// @grant        GM_getValue
+// @grant         GM_registerMenuCommand
+// @grant         GM_addStyle
+// @grant         GM_setValue
+// @grant         GM_getValue
 //
 // ==/UserScript==
 
