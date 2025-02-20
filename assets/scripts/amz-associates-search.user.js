@@ -19,6 +19,7 @@
   "use strict";
 
   function amazonAssociatesSearch() {
+    console.log("Amazon Associates Search script loaded successfully");
     // Busca Avançada em Tabela
     //description:  Realiza busca em tabela com exibição formatada dos resultados
 
@@ -26,17 +27,17 @@
     const styles = `
       .search-container {
           position: fixed;
-          top: 20px;
+          top: 5px;
           left: 50%;
           transform: translateX(-50%);
           z-index: 10000;
-          background: white;
-          padding: 20px;
+          background: black;
+          padding: 5px;
           border-radius: 8px;
           box-shadow: 0 2px 10px rgba(0,0,0,0.1);
           display: none;
           width: 90%;
-          max-width: 800px;
+          max-width: 1000px;
           font-family: Arial, sans-serif;
       }
 
@@ -58,7 +59,7 @@
       .results-container {
           max-height: calc(80vh - 150px);
           overflow-y: auto;
-          padding-right: 10px;
+          padding: 0px 5px 0px 5px;
       }
 
       .result-item {
