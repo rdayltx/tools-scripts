@@ -7,7 +7,7 @@
 // @author        DayLight
 //
 // @match         https://associados.amazon.com.br/p/reporting/earnings
-// @run-at        document-start
+// @run-at        document-end
 // @grant         GM_registerMenuCommand
 // @grant         GM_addStyle
 // @grant         GM_setValue
@@ -31,7 +31,7 @@
           left: 50%;
           transform: translateX(-50%);
           z-index: 10000;
-          background: black;
+          background: #19191c;
           padding: 5px;
           border-radius: 8px;
           box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -52,7 +52,7 @@
       }
 
       .search-input:focus {
-          border-color: #4a90e2;
+          border-color: #6816d6;
           outline: none;
       }
 
@@ -117,9 +117,8 @@
       }
 
       .highlight {
-          background-color: #fff3cd;
-          padding: 0 2px;
-          border-radius: 2px;
+          background-color:rgba(143, 72, 236, 0.64);
+          font-weight: bold;
       }
   `;
 
@@ -150,18 +149,21 @@
 
       if (!searchText.trim()) return;
 
-      // Função para remover acentos
+      // Normaliza o texto de pesquisa e divide em palavras-chave
+      const keywords = searchText
+        .toLowerCase()
+        .split(/(\s+|\+)/) // Divide por espaços ou "+"
+        .filter((k) => k.trim().length > 0);
+
+      // Função para normalizar texto (remover acentos e caracteres especiais)
       function normalizeText(text) {
+        if (typeof text !== "string") return "";
         return text
           .toLowerCase()
           .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "");
+          .replace(/[̀-ͯ]/g, "")
+          .replace(/[^a-zA-Z0-9\+]/g, "");
       }
-
-      const keywords = searchText
-        .toLowerCase()
-        .split(" ")
-        .filter((k) => k.length > 0);
 
       function containsAllKeywords(text) {
         const normalizedText = normalizeText(text);
@@ -183,7 +185,8 @@
         );
 
         for (const keyword of sortedKeywords) {
-          const regex = new RegExp(`(${keyword})`, "gi");
+          // Usa uma expressão regular para corresponder apenas a palavras inteiras
+          const regex = new RegExp(`\\b(${keyword})\\b`, "gi");
           highlighted = highlighted.replace(
             regex,
             '<span class="highlight">$1</span>'
@@ -222,6 +225,11 @@
 
         // Extrair o ID e o título
         const titleElement = cells[0].querySelector(".title-text");
+        if (!titleElement) {
+          console.warn("Elemento .title-text não encontrado em:", cells[0]);
+          return; // Pula este item
+        }
+
         const idElement = titleElement.querySelector(".item-id");
         const id = idElement ? idElement.textContent.trim() : "";
         const titleText = titleElement.textContent.replace(id, "").trim();
