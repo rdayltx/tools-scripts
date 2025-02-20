@@ -8,7 +8,7 @@
 //
 // @match         https://pobres.com.br/*
 //
-// @run-at        document-end
+// @run-at        document-start
 //
 // @grant         GM_registerMenuCommand
 // @grant         GM_addStyle
@@ -21,6 +21,9 @@
   "use strict";
 
   function pobreShortener() {
+    console.log(
+      "Script de melhorias do encurtador do Pobre carregado com sucesso"
+    );
     // Função para adicionar o botão de navegação
     function adicionarBotaoNavegacao() {
       // Não adicionar o botão se estiver exatamente na URL de destino
