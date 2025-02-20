@@ -7,7 +7,7 @@
 // @author        DayLight
 //
 // @match         https://pobres.com.br/*
-//
+// @run-at        document-start
 // @grant         GM_registerMenuCommand
 // @grant         GM_addStyle
 // @grant         GM_setValue
@@ -139,10 +139,5 @@
     }
   }
 
-  // Aguarda o DOM estar completamente carregado antes de executar o script
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", pobreShortener);
-  } else {
-    pobreShortener();
-  }
+  pobreShortener();
 })();
