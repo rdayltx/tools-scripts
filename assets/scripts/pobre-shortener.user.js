@@ -1,19 +1,19 @@
 // ==UserScript==
-// @name        New script
+// @name          Pobre Shortener enhancement
 // @namespace     Pobre's Toolbox
-// @version       2.6
+// @version       1.6
 // @icon          https://raw.githubusercontent.com/rdayltx/userscripts/master/pobre_tools.ico
 // @description   Ferramentas do analista
 // @author        DayLight
 //
-// @match         https://pobres.com.br/url*
+// @match         https://pobres.com.br/*
 //
 // @run-at        document-end
 //
-// @grant        GM_registerMenuCommand
-// @grant        GM_addStyle
-// @grant        GM_setValue
-// @grant        GM_getValue
+// @grant         GM_registerMenuCommand
+// @grant         GM_addStyle
+// @grant         GM_setValue
+// @grant         GM_getValue
 //
 // ==/UserScript==
 
