@@ -2,13 +2,11 @@
 // @name          Pobre Shortener enhancement
 // @namespace     Pobre's Toolbox
 // @version       1.6
-// @icon          https://raw.githubusercontent.com/rdayltx/userscripts/master/pobre_tools.ico
+// @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Ferramentas do analista
 // @author        DayLight
 //
 // @match         https://pobres.com.br/*
-//
-// @run-at        document-start
 //
 // @grant         GM_registerMenuCommand
 // @grant         GM_addStyle
