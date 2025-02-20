@@ -277,7 +277,7 @@ function executeConfiguredFeatures() {
       condition:
         getConfig("configAtivaAdS") && hostname === "associados.amazon.com.br",
       func: () => {
-        console.log("Executando script de busca avançada Amazon Associates");
+        console.log("Executando script de definição de data Amazon Associates");
         loadScript(
           "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/amz-associates-date-set.user.js"
         );
