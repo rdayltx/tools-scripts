@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Loader de Scripts
 // @namespace     Pobre's Toolbox
-// @version       1.3
+// @version       1.4
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Carrega scripts externos sob demanda
 // @grant         GM_xmlhttpRequest
@@ -19,7 +19,7 @@ const configDefaults = {
   configAtivaPM: false, //  Remover UTM Paguemenos
   configAtivaNike: false, //  Remover UTM Nike
   configAtivaTB: false, //  Remover UTM Terabyte
-  configAtivaMV: true, //  Redirecionar Magalu para o Pobre
+  magaluRecirect: true, //  Redirecionar Magalu para o Pobre
   configAtivaMagaluF: true, //  Botão remover Frete Magalu
   configAtivaAP: false, //  Botões maiusculo e minusculo no Anotepad
   configAtivaAdS: false, //  Busca avançada Relatório Amazon
@@ -76,7 +76,7 @@ function criarInterface() {
     { id: "configAtivaPM", label: "Remover UTM Pague Menos" },
     { id: "configAtivaNike", label: "Remover UTM Nike" },
     { id: "configAtivaTB", label: "Remover UTM Terabyte" },
-    { id: "configAtivaMV", label: "Redirecionar para o Pobre Magalu" },
+    { id: "magaluRecirect", label: "Redirecionar para o Pobre Magalu" },
     { id: "configAtivaMagaluF", label: "Remover Frete Magalu" },
     { id: "configAtivaAP", label: "Text Anotepad" },
     { id: "configAtivaAdS", label: "Definir data Amazon Associates" },
@@ -286,7 +286,7 @@ function executeConfiguredFeatures() {
 
     {
       condition:
-        getConfig("mlUTMcleaner") &&
+        getConfig("magaluRecirect") &&
         (location.hostname === "magazinevoce.com.br" ||
           location.hostname === "magazineluiza.com.br"),
       func: () => {
