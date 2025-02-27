@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Loader de Scripts
 // @namespace     Pobre's Toolbox
-// @version       1.0
+// @version       1.2
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Carrega scripts externos sob demanda
 // @grant         GM_xmlhttpRequest
@@ -51,7 +51,7 @@ function criarInterface() {
           border-radius: 15px;
           padding: 25px;
           box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-          width: 350px;
+          width: 900px;
           max-height: 80vh;
           overflow-y: auto;
           font-family: 'Arial', sans-serif;
