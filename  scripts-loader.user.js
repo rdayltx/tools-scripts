@@ -17,6 +17,7 @@ const configDefaults = {
   mlUTMcleaner: false, //  Remover UTM Mercado Livre
   amzUTMcleaner: false, //  Remover UTM Amazon
   magaluRecirect: true, //  Redirecionar Magalu para o Pobre
+  magaluFreteRemover: false, //  Remover Frete Magalu
   configAtivaAdS: false, //  Busca avançada Relatório Amazon
   configAtivaAS: false, //  Busca data Relatórios Amazon
   configAtivaMLrel: false, //  Exporta Relatório Mercado Livre
@@ -69,6 +70,7 @@ function criarInterface() {
     { id: "mlUTMcleaner", label: "Remover UTM Mercado Livre" },
     { id: "amzUTMcleaner", label: "Remover UTM Amazon" },
     { id: "magaluRecirect", label: "Redirecionar para o Pobre Magalu" },
+    { id: "magaluFreteRemover", label: "Remover Frete Magalu" },
     { id: "configAtivaAdS", label: "Definir data Amazon Associates" },
     { id: "configAtivaAS", label: "Busca avançada Amazon Associates" },
     { id: "configAtivaMLrel", label: "Exporta Relatório XLSX Mercado Livre" },
@@ -285,6 +287,20 @@ function executeConfiguredFeatures() {
         );
         loadScript(
           "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/magalu-redirect.user.js"
+        );
+      },
+    },
+
+    {
+      condition:
+        getConfig("magaluFreteRemover") &&
+        location.hostname === "sacola.magazinevoce.com.br",
+      func: () => {
+        console.log(
+          "Executando script de redirecionamento do Magalu para o Pobre"
+        );
+        loadScript(
+          "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/magalu-frete-remover.user.js"
         );
       },
     },
