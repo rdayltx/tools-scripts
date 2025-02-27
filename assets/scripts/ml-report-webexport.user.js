@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          ML WebReport Export
 // @namespace     Pobre's Toolbox
-// @version       3.6
+// @version       3.7
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Ferramentas do analista
 // @author        DayLight
@@ -143,37 +143,45 @@
     const dadosColetados = [];
     let paginaAtual = 1;
 
-    const totalPaginas = document.querySelectorAll(
+    const paginacaoLinks = document.querySelectorAll(
       ".andes-pagination__button a"
-    ).length;
+    );
+    const totalPaginas = parseInt(
+      paginacaoLinks[paginacaoLinks.length - 2].textContent.trim(),
+      10
+    );
+
     console.log(`Total de páginas encontradas: ${totalPaginas}`);
 
     function proximaPagina() {
       console.log(`Coletando dados da página ${paginaAtual}...`);
-      const dados = coletarDados();
+      // Adiciona um timeout de 3 segundos antes de coletar os dados
+      setTimeout(() => {
+        const dados = coletarDados();
 
-      if (dados.length === 0) {
-        console.log("Nenhum dado coletado nesta página. Finalizando coleta.");
-        salvarPagina(dadosColetados);
-        return;
-      }
+        if (dados.length === 0) {
+          console.log("Nenhum dado coletado nesta página. Finalizando coleta.");
+          salvarPagina(dadosColetados);
+          return;
+        }
 
-      dadosColetados.push(...dados);
+        dadosColetados.push(...dados);
 
-      const proximaPaginaButton = document.querySelector(
-        ".andes-pagination__button--next a"
-      );
-      if (proximaPaginaButton && paginaAtual < totalPaginas) {
-        console.log(
-          `Página ${paginaAtual} coletada. Navegando para a próxima...`
+        const proximaPaginaButton = document.querySelector(
+          ".andes-pagination__button--next a"
         );
-        paginaAtual++;
-        proximaPaginaButton.click();
-        setTimeout(proximaPagina, 3000);
-      } else {
-        console.log("Coleta finalizada. Baixando o arquivo HTML...");
-        salvarPagina(dadosColetados);
-      }
+        if (proximaPaginaButton && paginaAtual < totalPaginas) {
+          console.log(
+            `Página ${paginaAtual} coletada. Navegando para a próxima...`
+          );
+          paginaAtual++;
+          proximaPaginaButton.click();
+          setTimeout(proximaPagina, 3000);
+        } else {
+          console.log("Coleta finalizada. Baixando o arquivo HTML...");
+          salvarPagina(dadosColetados);
+        }
+      }, 3000); // Timeout de 3 segundos
     }
 
     proximaPagina();
