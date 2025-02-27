@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Loader de Scripts
 // @namespace     Pobre's Toolbox
-// @version       2.8
+// @version       2.9
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Carrega scripts externos sob demanda
 // @grant         GM_xmlhttpRequest
@@ -279,8 +279,8 @@ function executeConfiguredFeatures() {
     {
       condition:
         getConfig("magaluRecirect") &&
-        (location.hostname === "magazinevoce.com.br" ||
-          location.hostname === "magazineluiza.com.br"),
+        (location.hostname === "www.magazinevoce.com.br" ||
+          location.hostname === "www.magazineluiza.com.br"),
       func: () => {
         console.log(
           "Executando script de redirecionamento do Magalu para o Pobre"
@@ -316,7 +316,7 @@ function executeConfiguredFeatures() {
     },
 
     {
-      condition: getConfig("amzUTMcleaner") && hostname === "amazon.com.br",
+      condition: getConfig("amzUTMcleaner") && hostname === "www.amazon.com.br",
       func: () => {
         console.log("Executando script para remover UTM da Amazon");
         loadScript(
