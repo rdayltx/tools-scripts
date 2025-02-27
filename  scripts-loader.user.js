@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Loader de Scripts
 // @namespace     Pobre's Toolbox
-// @version       1.2
+// @version       1.3
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Carrega scripts externos sob demanda
 // @grant         GM_xmlhttpRequest
@@ -81,8 +81,8 @@ function criarInterface() {
     { id: "configAtivaAP", label: "Text Anotepad" },
     { id: "configAtivaAdS", label: "Definir data Amazon Associates" },
     { id: "configAtivaAS", label: "Busca avançada Amazon Associates" },
-    { id: "configAtivaMLrel", label: "Exporta Relatório Mercado Livre" },
-    { id: "mlReportWebExport", label: "Exporta Relatório Mercado Livre" },
+    { id: "configAtivaMLrel", label: "Exporta Relatório XLSX Mercado Livre" },
+    { id: "mlReportWebExport", label: "Exporta Relatório Web Mercado Livre" },
     { id: "configAtivaPobreS", label: "Pobre's Shortener Enhancement" },
   ];
 
