@@ -14,7 +14,7 @@
 
 // Variáveis de configuração
 const configDefaults = {
-  configAtivaML: false, //  Remover UTM Mercado Livre
+  mlUTMcleaner: false, //  Remover UTM Mercado Livre
   configAtivaAMZ: false, //  Remover UTM Amazon
   configAtivaPM: false, //  Remover UTM Paguemenos
   configAtivaNike: false, //  Remover UTM Nike
@@ -71,7 +71,7 @@ function criarInterface() {
 
   // Configuration sites
   const configs = [
-    { id: "configAtivaML", label: "Remover UTM Mercado Livre" },
+    { id: "mlUTMcleaner", label: "Remover UTM Mercado Livre" },
     { id: "configAtivaAMZ", label: "Remover UTM Amazon" },
     { id: "configAtivaPM", label: "Remover UTM Pague Menos" },
     { id: "configAtivaNike", label: "Remover UTM Nike" },
@@ -246,7 +246,7 @@ function executeConfiguredFeatures() {
         location.pathname.startsWith("/afiliados/dashboard"),
       func: () => {
         console.log(
-          "Executando script de exportação de relatório do Mercado Livre"
+          "Executando script de exportação Web de relatório do Mercado Livre"
         );
         loadScript(
           "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/ml-report-webexport.user.js"
@@ -265,6 +265,36 @@ function executeConfiguredFeatures() {
         );
         loadScript(
           "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/ml-report-export.user.js"
+        );
+      },
+    },
+
+    {
+      condition:
+        getConfig("mlUTMcleaner") &&
+        (location.hostname === "produto.mercadolivre.com.br" ||
+          location.hostname === "www.mercadolivre.com.br"),
+      func: () => {
+        console.log(
+          "Executando script de exportação Web de relatório do Mercado Livre"
+        );
+        loadScript(
+          "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/ml-utm-cleaner.user.js"
+        );
+      },
+    },
+
+    {
+      condition:
+        getConfig("mlUTMcleaner") &&
+        (location.hostname === "magazinevoce.com.br" ||
+          location.hostname === "magazineluiza.com.br"),
+      func: () => {
+        console.log(
+          "Executando script de exportação Web de relatório do Mercado Livre"
+        );
+        loadScript(
+          "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/magalu-redirect.user.js"
         );
       },
     },
