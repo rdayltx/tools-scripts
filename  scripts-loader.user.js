@@ -25,6 +25,7 @@ const configDefaults = {
   configAtivaAdS: false, //  Busca avançada Relatório Amazon
   configAtivaAS: false, //  Busca data Relatórios Amazon
   configAtivaMLrel: false, //  Exporta Relatório Mercado Livre
+  mlReportWebExport: false, //  Exporta Relatório Mercado Livre
   configAtivaPobreS: true, // Adiciona funcionalidades no encurtador do pobre
 };
 
@@ -81,6 +82,7 @@ function criarInterface() {
     { id: "configAtivaAdS", label: "Definir data Amazon Associates" },
     { id: "configAtivaAS", label: "Busca avançada Amazon Associates" },
     { id: "configAtivaMLrel", label: "Exporta Relatório Mercado Livre" },
+    { id: "mlReportWebExport", label: "Exporta Relatório Mercado Livre" },
     { id: "configAtivaPobreS", label: "Pobre's Shortener Enhancement" },
   ];
 
@@ -237,6 +239,21 @@ function executeConfiguredFeatures() {
   const hostname = window.location.hostname;
 
   const siteConfigs = [
+    {
+      condition:
+        getConfig("mlReportWebExport") &&
+        location.hostname === "www.mercadolivre.com.br" &&
+        location.pathname.startsWith("/afiliados/dashboard"),
+      func: () => {
+        console.log(
+          "Executando script de exportação de relatório do Mercado Livre"
+        );
+        loadScript(
+          "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/ml-report-webexport.user.js"
+        );
+      },
+    },
+
     {
       condition:
         getConfig("configAtivaMLrel") &&
