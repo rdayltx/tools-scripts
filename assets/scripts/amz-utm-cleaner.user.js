@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Amz UTM Cleaner
 // @namespace     Pobre's Toolbox
-// @version       1.0
+// @version       1.1
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Ferramentas do analista
 // @author        DayLight
@@ -24,6 +24,7 @@
 // @exclude-match *://*amazon.com.br/yourdevices*
 // @exclude-match *://*amazon.com.br/yourpayments*
 // @exclude-match *://*amazon.com.br/gp/css/*
+// @exclude-match *://*amazon.com.br/cart*
 //
 // @run-at        document-start
 //
