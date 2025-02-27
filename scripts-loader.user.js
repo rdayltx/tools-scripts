@@ -60,6 +60,9 @@
 // @match         *://*pt.anotepad.com/
 // @match         *://*nike.com.br/*
 //
+// @downloadURL   https://raw.githubusercontent.com/rdayltx/tools-scripts/main/scripts-loader.user.js
+// @updateURL     https://raw.githubusercontent.com/rdayltx/tools-scripts/main/scripts-loader.user.js
+//
 // @grant         GM_xmlhttpRequest
 // @grant         GM_registerMenuCommand
 // @grant         GM_addStyle
