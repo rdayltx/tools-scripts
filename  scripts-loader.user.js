@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Loader de Scripts
 // @namespace     Pobre's Toolbox
-// @version       1.4
+// @version       2.8
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Carrega scripts externos sob demanda
 // @grant         GM_xmlhttpRequest
@@ -15,13 +15,8 @@
 // Variáveis de configuração
 const configDefaults = {
   mlUTMcleaner: false, //  Remover UTM Mercado Livre
-  configAtivaAMZ: false, //  Remover UTM Amazon
-  configAtivaPM: false, //  Remover UTM Paguemenos
-  configAtivaNike: false, //  Remover UTM Nike
-  configAtivaTB: false, //  Remover UTM Terabyte
+  amzUTMcleaner: false, //  Remover UTM Amazon
   magaluRecirect: true, //  Redirecionar Magalu para o Pobre
-  configAtivaMagaluF: true, //  Botão remover Frete Magalu
-  configAtivaAP: false, //  Botões maiusculo e minusculo no Anotepad
   configAtivaAdS: false, //  Busca avançada Relatório Amazon
   configAtivaAS: false, //  Busca data Relatórios Amazon
   configAtivaMLrel: false, //  Exporta Relatório Mercado Livre
@@ -72,13 +67,8 @@ function criarInterface() {
   // Configuration sites
   const configs = [
     { id: "mlUTMcleaner", label: "Remover UTM Mercado Livre" },
-    { id: "configAtivaAMZ", label: "Remover UTM Amazon" },
-    { id: "configAtivaPM", label: "Remover UTM Pague Menos" },
-    { id: "configAtivaNike", label: "Remover UTM Nike" },
-    { id: "configAtivaTB", label: "Remover UTM Terabyte" },
+    { id: "amzUTMcleaner", label: "Remover UTM Amazon" },
     { id: "magaluRecirect", label: "Redirecionar para o Pobre Magalu" },
-    { id: "configAtivaMagaluF", label: "Remover Frete Magalu" },
-    { id: "configAtivaAP", label: "Text Anotepad" },
     { id: "configAtivaAdS", label: "Definir data Amazon Associates" },
     { id: "configAtivaAS", label: "Busca avançada Amazon Associates" },
     { id: "configAtivaMLrel", label: "Exporta Relatório XLSX Mercado Livre" },
@@ -261,7 +251,7 @@ function executeConfiguredFeatures() {
         location.pathname.startsWith("/afiliados/dashboard"),
       func: () => {
         console.log(
-          "Executando script de exportação de relatório do Mercado Livre"
+          "Executando script de exportação de relatório XLSX do Mercado Livre"
         );
         loadScript(
           "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/ml-report-export.user.js"
@@ -291,7 +281,7 @@ function executeConfiguredFeatures() {
           location.hostname === "magazineluiza.com.br"),
       func: () => {
         console.log(
-          "Executando script de exportação Web de relatório do Mercado Livre"
+          "Executando script de redirecionamento do Magalu para o Pobre"
         );
         loadScript(
           "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/magalu-redirect.user.js"
@@ -305,6 +295,16 @@ function executeConfiguredFeatures() {
         console.log("Executando script de melhorias do encurtador do Pobre");
         loadScript(
           "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/pobre-shortener.user.js"
+        );
+      },
+    },
+
+    {
+      condition: getConfig("amzUTMcleaner") && hostname === "amazon.com.br",
+      func: () => {
+        console.log("Executando script para remover UTM da Amazon");
+        loadScript(
+          "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/amz-utm-cleaner.user.js"
         );
       },
     },
