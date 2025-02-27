@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Loader de Scripts
 // @namespace     Pobre's Toolbox
-// @version       3.1
+// @version       3.2
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Carrega scripts externos sob demanda
 //
@@ -52,6 +52,7 @@
 // @exclude-match *://*amazon.com.br/prime*
 // @exclude-match *://*amazon.com.br/gcx*
 // @exclude-match *://*amazon.com.br/baby-reg*
+// @exclude-match *://*amazon.com.br/gp/css/*
 //
 // ============== PAGUEMENOS ==============
 // @match         *://paguemenos.com.br/*
