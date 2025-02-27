@@ -18,6 +18,12 @@
 // @exclude-match *://*amazon.com.br/prime*
 // @exclude-match *://*amazon.com.br/gcx*
 // @exclude-match *://*amazon.com.br/baby-reg*
+// @exclude-match *://*amazon.com.br/yourstore*
+// @exclude-match *://*amazon.com.br/yourmembershipsandsubscriptions*
+// @exclude-match *://*amazon.com.br/yourmemberships*
+// @exclude-match *://*amazon.com.br/yourdevices*
+// @exclude-match *://*amazon.com.br/yourpayments*
+// @exclude-match *://*amazon.com.br/gp/css/*
 //
 // @run-at        document-start
 //
