@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name          Loader de Scripts
 // @namespace     Pobre's Toolbox
-// @version       3.0
+// @version       3.1
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Carrega scripts externos sob demanda
 //
-// @match        https://pobres.com.br/url/*
+// @match        *://*pobres.com.br/url/*
 //
 // ============== MERCADO LIVRE ==============
 // @match         *://*mercadolivre.com.br/*
@@ -31,33 +31,33 @@
 // @exclude-match *://*mercadolivre.com.br/meus-alertas*
 //
 // ============== MAGAZINE LUIZA ==============
-// @match         https://www.magazinevoce.com.br/*
-// @match         https://sacola.magazinevoce.com.br/*
-// @match         https://www.magazineluiza.com.br/*
+// @match         *://*magazinevoce.com.br/*
+// @match         *://*sacola.magazinevoce.com.br/*
+// @match         *://*magazineluiza.com.br/*
 //
 // ============== TERABYTE ==============
-// @match         https://www.terabyteshop.com.br/*
+// @match         *://*terabyteshop.com.br/*
 //
 // ============== AMAZON ==============
-// @match         https://www.amazon.com.br/*
-// @match         https://associados.amazon.com.br/p/reporting/earnings
-// @exclude-match https://www.amazon.com.br/hz/*
-// @exclude-match https://www.amazon.com.br/progress-tracker/*
-// @exclude-match https://www.amazon.com.br/kindle-dbs*
-// @exclude-match https://www.amazon.com.br/mn*
-// @exclude-match https://www.amazon.com.br/myk*
-// @exclude-match https://www.amazon.com.br/b*
-// @exclude-match https://www.amazon.com.br/gp/*
-// @exclude-match https://www.amazon.com.br/s*
-// @exclude-match https://www.amazon.com.br/prime*
-// @exclude-match https://www.amazon.com.br/gcx*
-// @exclude-match https://www.amazon.com.br/baby-reg*
+// @match         *://*amazon.com.br/*
+// @match         *://*associados.amazon.com.br/p/reporting/*
+// @exclude-match *://*amazon.com.br/hz/*
+// @exclude-match *://*amazon.com.br/progress-tracker/*
+// @exclude-match *://*amazon.com.br/kindle-dbs*
+// @exclude-match *://*amazon.com.br/mn*
+// @exclude-match *://*amazon.com.br/myk*
+// @exclude-match *://*amazon.com.br/b*
+// @exclude-match *://*amazon.com.br/gp/*
+// @exclude-match *://*amazon.com.br/s*
+// @exclude-match *://*amazon.com.br/prime*
+// @exclude-match *://*amazon.com.br/gcx*
+// @exclude-match *://*amazon.com.br/baby-reg*
 //
 // ============== PAGUEMENOS ==============
-// @match         *://www.paguemenos.com.br/*
+// @match         *://paguemenos.com.br/*
 //
-// @match         https://pt.anotepad.com/
-// @match         *://www.nike.com.br/*
+// @match         *://*pt.anotepad.com/
+// @match         *://*nike.com.br/*
 //
 // @grant         GM_xmlhttpRequest
 // @grant         GM_registerMenuCommand
