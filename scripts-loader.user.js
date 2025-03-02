@@ -180,6 +180,7 @@ function criarInterface() {
 
     checkbox.addEventListener("change", () => {
       GM_setValue(id, checkbox.checked);
+      window.loaderConfig[id] = checkbox.checked; // Atualiza a configuração global
       showToast(
         `${label} agora está: ${checkbox.checked ? "Ativado" : "Desativado"}`
       );
@@ -434,6 +435,13 @@ function executeConfiguredFeatures() {
   });
 }
 
+// Expor configurações para scripts carregados
+window.loaderConfig = {
+  itemHighlightKeepa: getConfig("itemHighlightKeepa"),
+  // Adicione outras configurações aqui, se necessário
+};
+
+console.log("Configurações do loader:", window.loaderConfig);
 // Executar funções quando o DOM estiver completamente carregado
 document.addEventListener("DOMContentLoaded", executeConfiguredFeatures);
 // Register menu command
