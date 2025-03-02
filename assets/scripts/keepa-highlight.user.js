@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Highlight Tracked itens keepa
 // @namespace     Pobre's Toolbox
-// @version       3.9
+// @version       4.0
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Ferramentas do analista
 // @author        DayLight
