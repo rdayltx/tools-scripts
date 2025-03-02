@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Loader de Scripts
 // @namespace     Pobre's Toolbox
-// @version       3.6
+// @version       3.7
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Carrega scripts externos sob demanda
 //
@@ -71,6 +71,7 @@
 // @grant         GM_setValue
 // @grant         GM_getValue
 // @run-at        document-start
+// @require       https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/keepa-highlight.user.js
 // ==/UserScript==
 
 // Variáveis de configuração
@@ -409,15 +410,15 @@ function executeConfiguredFeatures() {
       },
     },
 
-    {
-      condition: getConfig("itemHighlightKeepa") && hostname === "keepa.com",
-      func: () => {
-        console.log("Executando script de tracked itens highlight keepa");
-        loadScript(
-          "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/keepa-highlight.user.js"
-        );
-      },
-    },
+    // {
+    //   condition: getConfig("itemHighlightKeepa") && hostname === "keepa.com",
+    //   func: () => {
+    //     console.log("Executando script de tracked itens highlight keepa");
+    //     loadScript(
+    //       "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/keepa-highlight.user.js"
+    //     );
+    //   },
+    // },
   ];
 
   siteConfigs.forEach((config) => {
