@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Loader de Scripts
 // @namespace     Pobre's Toolbox
-// @version       3.5
+// @version       3.6
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Carrega scripts externos sob demanda
 //
@@ -54,6 +54,8 @@
 // @exclude-match *://*amazon.com.br/baby-reg*
 // @exclude-match *://*amazon.com.br/gp/css/*
 //
+// @match         *://keepa.com/*
+//
 // ============== PAGUEMENOS ==============
 // @match         *://paguemenos.com.br/*
 //
@@ -82,6 +84,7 @@ const configDefaults = {
   configAtivaMLrel: false, //  Exporta Relatório Mercado Livre
   mlReportWebExport: false, //  Exporta Relatório Mercado Livre
   configAtivaPobreS: true, // Adiciona funcionalidades no encurtador do pobre
+  itemHighlightKeepa: false, // Highlight tracked item keepa
 };
 
 // Retrieve or initialize configurations
@@ -135,6 +138,7 @@ function criarInterface() {
     { id: "configAtivaMLrel", label: "Exporta Relatório XLSX Mercado Livre" },
     { id: "mlReportWebExport", label: "Exporta Relatório Web Mercado Livre" },
     { id: "configAtivaPobreS", label: "Pobre's Shortener Enhancement" },
+    { id: "itemHighlightKeepa", label: "Highlight tracked item keepa" },
   ];
 
   // Create configuration section
@@ -401,6 +405,16 @@ function executeConfiguredFeatures() {
         console.log("Executando script de definição de data Amazon Associates");
         loadScript(
           "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/amz-associates-date-set.user.js"
+        );
+      },
+    },
+
+    {
+      condition: getConfig("itemHighlightKeepa") && hostname === "keepa.com",
+      func: () => {
+        console.log("Executando script de tracked itens highlight keepa");
+        loadScript(
+          "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/keepa-highlight.user.js"
         );
       },
     },
