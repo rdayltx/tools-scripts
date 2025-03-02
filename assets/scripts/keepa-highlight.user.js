@@ -13,21 +13,21 @@
 // @grant        GM_getValue
 // ==/UserScript==
 
-(function () {
-  "use strict";
+// Verifica se a configuração está ativada
+if (window.loaderConfig && window.loaderConfig.itemHighlightKeepa) {
+  console.log("Highlight Keepa está ativado. Executando script...");
+  console.log("Script iniciado.");
 
-  const jsonUrl =
-    "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/data/keepa_tracked.json";
-  const storageKey = "trackedCodes";
-  const updateInterval = 10 * 60 * 1000; // 10 minutos
-  const newImageUrl =
-    "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/image/award-icon.svg";
-  const processedRows = new Set(); // Armazena linhas já processadas
+  (function () {
+    "use strict";
 
-  // Verifica se a configuração está ativada
-  if (window.loaderConfig && window.loaderConfig.itemHighlightKeepa) {
-    console.log("Highlight Keepa está ativado. Executando script...");
-    console.log("Script iniciado.");
+    const jsonUrl =
+      "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/data/keepa_tracked.json";
+    const storageKey = "trackedCodes";
+    const updateInterval = 10 * 60 * 1000; // 10 minutos
+    const newImageUrl =
+      "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/image/award-icon.svg";
+    const processedRows = new Set(); // Armazena linhas já processadas
 
     // Debounce para evitar execução excessiva
     function debounce(func, wait) {
@@ -194,7 +194,7 @@
         setTimeout(startObserver, 5000); // Espera 5 segundos antes de procurar o contêiner
       }, 2000); // Espera 2 segundos antes de iniciar
     });
-  } else {
-    console.log("Highlight Keepa está desativado. Ignorando script...");
-  }
-})();
+  })();
+} else {
+  console.log("Highlight Keepa está desativado. Ignorando script...");
+}
