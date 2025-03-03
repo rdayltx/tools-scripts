@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Loader de Scripts
 // @namespace     Pobre's Toolbox
-// @version       3.8
+// @version       3.9
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Carrega scripts externos sob demanda
 //
@@ -71,7 +71,6 @@
 // @grant         GM_setValue
 // @grant         GM_getValue
 // @run-at        document-start
-// @require       https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/keepa-highlight.user.js
 // ==/UserScript==
 
 // Variáveis de configuração
@@ -85,7 +84,6 @@ const configDefaults = {
   configAtivaMLrel: false, //  Exporta Relatório Mercado Livre
   mlReportWebExport: false, //  Exporta Relatório Mercado Livre
   configAtivaPobreS: true, // Adiciona funcionalidades no encurtador do pobre
-  itemHighlightKeepa: false, // Highlight tracked item keepa
 };
 
 // Retrieve or initialize configurations
@@ -139,7 +137,6 @@ function criarInterface() {
     { id: "configAtivaMLrel", label: "Exporta Relatório XLSX Mercado Livre" },
     { id: "mlReportWebExport", label: "Exporta Relatório Web Mercado Livre" },
     { id: "configAtivaPobreS", label: "Pobre's Shortener Enhancement" },
-    { id: "itemHighlightKeepa", label: "Highlight tracked item keepa" },
   ];
 
   // Create configuration section
@@ -180,7 +177,6 @@ function criarInterface() {
 
     checkbox.addEventListener("change", () => {
       GM_setValue(id, checkbox.checked);
-      window.loaderConfig[id] = checkbox.checked; // Atualiza a configuração global
       showToast(
         `${label} agora está: ${checkbox.checked ? "Ativado" : "Desativado"}`
       );
@@ -410,16 +406,6 @@ function executeConfiguredFeatures() {
         );
       },
     },
-
-    // {
-    //   condition: getConfig("itemHighlightKeepa") && hostname === "keepa.com",
-    //   func: () => {
-    //     console.log("Executando script de tracked itens highlight keepa");
-    //     loadScript(
-    //       "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/keepa-highlight.user.js"
-    //     );
-    //   },
-    // },
   ];
 
   siteConfigs.forEach((config) => {
@@ -434,12 +420,6 @@ function executeConfiguredFeatures() {
     }
   });
 }
-
-// Expor configurações para scripts carregados
-window.loaderConfig = {
-  itemHighlightKeepa: getConfig("itemHighlightKeepa"),
-  // Adicione outras configurações aqui, se necessário
-};
 
 console.log("Configurações do loader:", window.loaderConfig);
 // Executar funções quando o DOM estiver completamente carregado
