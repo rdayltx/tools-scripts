@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          ML UTM Cleaner
 // @namespace     Pobre's Toolbox
-// @version       1.0
+// @version       1.2
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Ferramentas do analista
 // @author        DayLight
@@ -27,6 +27,7 @@
 // @exclude-match *://*mercadolivre.com.br/protections*
 // @exclude-match *://*mercadolivre.com.br/listas-de-presentes*
 // @exclude-match *://*mercadolivre.com.br/meus-alertas*
+// @exclude-match *://*mercadolivre.com.br/afiliados/*
 //
 // @run-at        document-start
 //
