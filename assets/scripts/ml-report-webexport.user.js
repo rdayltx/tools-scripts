@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          ML WebReport Export
 // @namespace     Pobre's Toolbox
-// @version       3.8
+// @version       3.9
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Ferramentas do analista
 // @author        DayLight
@@ -84,24 +84,40 @@
           </style>
           <script>
               function performSearch() {
-                const searchText = document.getElementById('searchBox').value.toLowerCase();
-                const rows = document.querySelectorAll('#data-table tbody tr');
+                  const searchText = document.getElementById('searchBox').value.trim().toLowerCase();
+                  const rows = document.querySelectorAll('#data-table tbody tr');
 
-                rows.forEach(row => {
-                    const productCell = row.querySelector('td:nth-child(2)');
-                    const productLink = productCell.querySelector('a');
-                    const productText = productLink ? productLink.textContent.toLowerCase() : '';
+                  // Se o campo de busca estiver vazio, exibe todas as linhas sem destaque
+                  if (!searchText) {
+                      rows.forEach(row => {
+                          row.style.display = '';
+                          const productCell = row.querySelector('td:nth-child(2)');
+                          const productLink = productCell.querySelector('a');
+                          if (productLink) {
+                              productLink.innerHTML = productLink.textContent;
+                          }
+                      });
+                      return;
+                  }
 
-                    if (productText.includes(searchText)) {
-                        row.style.display = '';
-                        if (productLink) {
-                            productLink.innerHTML = productLink.textContent.replace(new RegExp(searchText, 'gi'), match => '<span class="highlight">' + match + '</span>');
-                        }
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-            }
+                  rows.forEach(row => {
+                      const productCell = row.querySelector('td:nth-child(2)');
+                      const productLink = productCell.querySelector('a');
+                      const productText = productLink ? productLink.textContent.toLowerCase() : '';
+
+                      if (productText.includes(searchText)) {
+                          row.style.display = '';
+                          if (productLink) {
+                              productLink.innerHTML = productLink.textContent.replace(
+                                  new RegExp(searchText, 'gi'),
+                                  match => '<span class="highlight">' + match + '</span>'
+                              );
+                          }
+                      } else {
+                          row.style.display = 'none';
+                      }
+                  });
+              }
           </script>
       </head>
       <body>
