@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Amazon ASIN Capturer Enhanced
 // @namespace    Pobre's Toolbox
-// @version      1.6
+// @version      1.7
 // @description  Capture ASIN from Amazon product page and send to GitHub Gist in a unique and incremental JSON list
 // @author       DayLight
 // @icon         https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
@@ -11,8 +11,8 @@
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
-// @downloadURL   https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/ASIN-extractor.user.js
-// @updateURL     https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/ASIN-extractor.user.js
+// @downloadURL   https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/scripts/ASIN-extractor.user.js
+// @updateURL     https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/scripts/ASIN-extractor.user.js
 // ==/UserScript==
 
 (function () {
