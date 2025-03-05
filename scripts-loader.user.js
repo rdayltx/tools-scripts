@@ -62,6 +62,8 @@
 // @match         *://*pt.anotepad.com/
 // @match         *://*nike.com.br/*
 //
+// @match         *://localhost:1918/*
+//
 // @downloadURL   https://raw.githubusercontent.com/rdayltx/tools-scripts/main/scripts-loader.user.js
 // @updateURL     https://raw.githubusercontent.com/rdayltx/tools-scripts/main/scripts-loader.user.js
 //
@@ -81,8 +83,9 @@ const configDefaults = {
   magaluFreteRemover: false, //  Remover Frete Magalu
   configAtivaAdS: false, //  Busca avançada Relatório Amazon
   configAtivaAS: false, //  Busca data Relatórios Amazon
-  configAtivaMLrel: false, //  Exporta Relatório Mercado Livre
-  mlReportWebExport: false, //  Exporta Relatório Mercado Livre
+  configAtivaMLrel: false, //  Exporta Relatório XLSX do ML
+  mlReportWebExport: false, //  Exporta Relatório Web do ML
+  configSearchML: false, //  Pesquisa no Relatório Web do ML
   configAtivaPobreS: true, // Adiciona funcionalidades no encurtador do pobre
 };
 
@@ -136,6 +139,7 @@ function criarInterface() {
     { id: "configAtivaAS", label: "Busca avançada Amazon Associates" },
     { id: "configAtivaMLrel", label: "Exporta Relatório XLSX Mercado Livre" },
     { id: "mlReportWebExport", label: "Exporta Relatório Web Mercado Livre" },
+    { id: "configSearchML", label: "Search ML Report" },
     { id: "configAtivaPobreS", label: "Pobre's Shortener Enhancement" },
   ];
 
@@ -332,6 +336,18 @@ function executeConfiguredFeatures() {
         );
         loadScript(
           "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/ml-utm-cleaner.user.js"
+        );
+      },
+    },
+
+    {
+      condition:
+        getConfig("configSearchML") &&
+        location.origin === "http://localhost:1918",
+      func: () => {
+        console.log("Executando script de Pesquisa em relatório");
+        loadScript(
+          "https://raw.githubusercontent.com/rdayltx/tools-scripts/refs/heads/main/assets/scripts/ml-report-search.user.js"
         );
       },
     },
