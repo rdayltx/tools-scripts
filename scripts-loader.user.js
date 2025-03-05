@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Loader de Scripts
 // @namespace     Pobre's Toolbox
-// @version       3.9
+// @version       4.0
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Carrega scripts externos sob demanda
 //
