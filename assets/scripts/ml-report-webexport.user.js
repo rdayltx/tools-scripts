@@ -1,21 +1,17 @@
 // ==UserScript==
 // @name          ML WebReport Export
 // @namespace     Pobre's Toolbox
-// @version       3.9
+// @version       4.0
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Ferramentas do analista
 // @author        DayLight
-//
 // @match         https://www.mercadolivre.com.br/afiliados/*
-//
 // @run-at        document-end
-//
 // @grant         GM_registerMenuCommand
 // @grant         GM_download
 // @grant         GM_addStyle
 // @grant         GM_setValue
 // @grant         GM_getValue
-//
 // ==/UserScript==
 
 (function () {
@@ -23,21 +19,32 @@
 
   // Estilos CSS
   const styles = `
-  .toast {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: #4CAF50;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 5px;
-      font-size: 16px;
-      z-index: 9999;
-      opacity: 0;
-      transition: opacity 0.5s;
+    .toast {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        font-size: 16px;
+        z-index: 9999;
+        opacity: 0;
+        transition: opacity 0.5s;
+    }
+  `;
+
+  // Função para extrair a data do elemento
+  function getDateFromPage() {
+    const dateElement = document.querySelector(
+      ".andes-dropdown__display-values"
+    );
+    if (dateElement) {
+      return dateElement.textContent.trim();
+    }
+    return "data_desconhecida"; // Valor padrão caso o elemento não seja encontrado
   }
-`;
 
   function coletarDados() {
     console.log("Coletando dados da página...");
@@ -70,10 +77,13 @@
 
   function salvarPagina(dados) {
     console.log("Gerando arquivo HTML para download...");
+    const dateText = getDateFromPage(); // Obtém o texto da data
+    const fileName = `dados_coletados_${dateText.replace(/\s/g, "_")}.html`; // Cria o nome do arquivo dinâmico
+
     let conteudo = `<!DOCTYPE html>
       <html>
       <head>
-          <title>Dados Coletados</title>
+          <title>Dados Coletados - ${dateText}</title>
           <meta charset="UTF-8">
           <style>
               body { font-family: Arial, sans-serif; margin: 20px; }
@@ -87,7 +97,6 @@
                   const searchText = document.getElementById('searchBox').value.trim().toLowerCase();
                   const rows = document.querySelectorAll('#data-table tbody tr');
 
-                  // Se o campo de busca estiver vazio, exibe todas as linhas sem destaque
                   if (!searchText) {
                       rows.forEach(row => {
                           row.style.display = '';
@@ -121,7 +130,7 @@
           </script>
       </head>
       <body>
-          <h1>Dados Coletados da Tabela</h1>
+          <h1>Dados Coletados da Tabela - ${dateText}</h1>
           <input type="text" id="searchBox" onkeyup="performSearch()" placeholder="Buscar produto..." style="margin-bottom: 10px; padding: 5px; width: 200px;">
           <table id="data-table">
               <thead>
@@ -143,20 +152,17 @@
 
     conteudo += `</tbody></table></body></html>`;
 
-    // Criar um Blob com o conteúdo
     const blob = new Blob([conteudo], { type: "text/html" });
     const url = URL.createObjectURL(blob);
-
-    // Criar um link invisível e forçar o download
     const link = document.createElement("a");
     link.href = url;
-    link.download = "dados_coletados.html";
+    link.download = fileName; // Usa o nome do arquivo dinâmico
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    console.log("Arquivo HTML baixado com sucesso!");
+    console.log(`Arquivo HTML baixado com sucesso: ${fileName}`);
   }
 
   function navegarPelasPaginas() {
@@ -175,7 +181,6 @@
 
     function proximaPagina() {
       console.log(`Coletando dados da página ${paginaAtual}...`);
-      // Adiciona um timeout de 3 segundos antes de coletar os dados
       setTimeout(() => {
         const dados = coletarDados();
 
@@ -201,7 +206,7 @@
           console.log("Coleta finalizada. Baixando o arquivo HTML...");
           salvarPagina(dadosColetados);
         }
-      }, 3000); // Timeout de 3 segundos
+      }, 3000);
     }
 
     proximaPagina();
@@ -225,7 +230,6 @@
     }, 3000);
   }
 
-  // Format date for MercadoLivre URL
   function formatDateForUrl(date) {
     const dateObj = new Date(date);
     const nextDay = new Date(dateObj);
@@ -238,14 +242,12 @@
     return `${formatDate(dateObj)}--${formatDate(nextDay)}`;
   }
 
-  // Generate complete URL for a specific date
   function generateUrl(date) {
     const baseUrl = "https://www.mercadolivre.com.br/afiliados/dashboard";
     const dateRange = formatDateForUrl(date);
     return `${baseUrl}?filter_time_range=${encodeURIComponent(dateRange)}`;
   }
 
-  // Create date selection modal
   function createDateModal() {
     const modal = document.createElement("div");
     modal.style.cssText = `
@@ -333,20 +335,18 @@
     document.body.appendChild(modal);
   }
 
-  // Function to check if we should auto-export
   function checkAndAutoExport() {
     if (localStorage.getItem("ml_should_export") === "true") {
-      localStorage.removeItem("ml_should_export"); // Clear the flag
+      localStorage.removeItem("ml_should_export");
       setTimeout(() => {
-        const dados = []; // Definindo a variável dados aqui
+        const dados = [];
         mostrarToast("Coleta iniciada!");
         try {
           navegarPelasPaginas();
         } catch (error) {
           alert(`Erro durante a extração: ${error.message}`);
-          hideLoading();
         }
-      }, 2000); // Wait for page to load
+      }, 2000);
     }
   }
 
@@ -369,6 +369,5 @@
   botaoColeta.addEventListener("click", createDateModal);
   document.body.appendChild(botaoColeta);
 
-  // Check for auto-export on page load
   checkAndAutoExport();
 })();
