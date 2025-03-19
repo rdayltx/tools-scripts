@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Amazon ASIN Highlighter
 // @namespace     https://amazon.com.br/
-// @version       1.8
+// @version       2.0
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @author        DayLight
 // @description   Destaca produtos na Amazon com ASINs no Firebase e permite adicionar novos.
@@ -27,27 +27,72 @@
   };
 
   let db;
+  let currentASIN = null;
   firebase.initializeApp(firebaseConfig);
   db = firebase.firestore();
 
   firebase
     .auth()
     .signInAnonymously()
-    .then(() => main())
+    .then(() => {
+      main();
+      setupUrlChangeDetection();
+    })
     .catch(console.error);
 
+  function setupUrlChangeDetection() {
+    // Monitora alterações no History API
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+
+    history.pushState = function (...args) {
+      originalPushState.apply(history, args);
+      triggerUrlChange();
+    };
+
+    history.replaceState = function (...args) {
+      originalReplaceState.apply(history, args);
+      triggerUrlChange();
+    };
+
+    // Monitora navegação tradicional (back/forward)
+    window.addEventListener("popstate", triggerUrlChange);
+
+    // Verificação periódica como fallback
+    let lastUrl = location.href;
+    setInterval(() => {
+      if (location.href !== lastUrl) {
+        lastUrl = location.href;
+        triggerUrlChange();
+      }
+    }, 500);
+  }
+
+  function triggerUrlChange() {
+    const newASIN = getASIN();
+
+    // Só executa se o ASIN mudar ou for a primeira vez
+    if (newASIN !== currentASIN) {
+      currentASIN = newASIN;
+      main();
+    }
+  }
+
   function main() {
+    // Remove botão existente
+    const existingBtn = document.getElementById("asin-button");
+    if (existingBtn) existingBtn.remove();
+
     const asin = getASIN();
     if (asin) {
       checkASIN(asin).then((exists) => {
         addASINButton(asin, exists);
-        // if (exists) highlightProduct();
       });
     }
   }
 
   function getASIN() {
-    const match = window.location.href.match(/\/dp\/(\w{10})/);
+    const match = window.location.href.match(/\/(?:dp|gp\/product)\/(\w{10})/);
     return match ? match[1] : null;
   }
 
@@ -63,24 +108,9 @@
       });
   }
 
-  // function highlightProduct() {
-  //   const indicator = document.createElement("div");
-  //   indicator.style.cssText = `
-  //     position: fixed;
-  //     bottom: 15px;
-  //     right: 380px;
-  //     width: 50px;
-  //     height: 50px;
-  //     background:#00c400;
-  //     border-radius: 50%;
-  //     z-index: 9999;
-  //     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-  //   `;
-  //   document.body.appendChild(indicator);
-  // }
-
   function addASINButton(asin, exists) {
     const btn = document.createElement("button");
+    btn.id = "asin-button"; // ID para controle
     btn.innerHTML = exists ? "✔️ ASIN Cadastrado" : "➕ Add ASIN";
 
     btn.style.cssText = `
@@ -111,12 +141,10 @@
         })
         .then(() => {
           showToast("ASIN Adicionado com sucesso!");
-          // highlightProduct();
           btn.innerHTML = "✔️ ASIN Cadastrado";
           btn.style.background = "#999";
           btn.style.cursor = "not-allowed";
           btn.disabled = true;
-          exists = true;
         })
         .catch((error) => {
           console.error("Save error:", error);
