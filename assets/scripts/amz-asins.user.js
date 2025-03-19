@@ -1,9 +1,8 @@
 // ==UserScript==
 // @name          Amazon ASIN Highlighter
 // @namespace     https://amazon.com.br/
-// @version       1.1
+// @version       1.2
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
-// @description   Ferramentas do analista
 // @author        DayLight
 // @description   Destaca produtos na Amazon com ASINs no Firebase e permite adicionar novos.
 // @match         https://www.amazon.com.br/*
