@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Amazon ASIN Highlighter
 // @namespace     https://amazon.com.br/
-// @version       1.7
+// @version       1.8
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @author        DayLight
 // @description   Destaca produtos na Amazon com ASINs no Firebase e permite adicionar novos.
@@ -21,7 +21,7 @@
     apiKey: "AIzaSyAfMl8dnRMlO2F4CLpCe0SreCALS_xmdVg",
     authDomain: "amz-asin.firebaseapp.com",
     projectId: "amz-asin",
-    storageBucket: "amz-asin.appspot.com",
+    storageBucket: "amz-asin.firebasestorage.app",
     messagingSenderId: "967791356293",
     appId: "1:967791356293:web:f72c98b63cfdabfd3d7cec",
   };
