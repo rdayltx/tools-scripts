@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Amazon ASIN Highlighter
 // @namespace     https://amazon.com.br/
-// @version       2.3
+// @version       2.4
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @author        DayLight
 // @description   Destaca produtos na Amazon com ASINs no Firebase e permite adicionar novos, incluindo o nome de quem adicionou.
@@ -147,7 +147,9 @@
       db.collection("asins")
         .doc(asin)
         .set({
-          added: new Date().toISOString(),
+          added: new Date().toLocaleString("pt-BR", {
+            timeZone: "America/Sao_Paulo",
+          }),
           url: window.location.href,
           addedBy: userName,
         })
