@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name          Amazon ASIN Highlighter
 // @namespace     https://amazon.com.br/
-// @version       2.0
+// @version       2.3
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @author        DayLight
-// @description   Destaca produtos na Amazon com ASINs no Firebase e permite adicionar novos.
+// @description   Destaca produtos na Amazon com ASINs no Firebase e permite adicionar novos, incluindo o nome de quem adicionou.
 // @match         https://www.amazon.com.br/*
 // @grant         none
 // @require       https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js
@@ -41,7 +41,6 @@
     .catch(console.error);
 
   function setupUrlChangeDetection() {
-    // Monitora alterações no History API
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
 
@@ -55,10 +54,8 @@
       triggerUrlChange();
     };
 
-    // Monitora navegação tradicional (back/forward)
     window.addEventListener("popstate", triggerUrlChange);
 
-    // Verificação periódica como fallback
     let lastUrl = location.href;
     setInterval(() => {
       if (location.href !== lastUrl) {
@@ -70,8 +67,6 @@
 
   function triggerUrlChange() {
     const newASIN = getASIN();
-
-    // Só executa se o ASIN mudar ou for a primeira vez
     if (newASIN !== currentASIN) {
       currentASIN = newASIN;
       main();
@@ -79,14 +74,13 @@
   }
 
   function main() {
-    // Remove botão existente
     const existingBtn = document.getElementById("asin-button");
     if (existingBtn) existingBtn.remove();
 
     const asin = getASIN();
     if (asin) {
-      checkASIN(asin).then((exists) => {
-        addASINButton(asin, exists);
+      checkASIN(asin).then((doc) => {
+        addASINButton(asin, doc);
       });
     }
   }
@@ -97,52 +91,70 @@
   }
 
   function checkASIN(asin) {
-    return db
-      .collection("asins")
-      .doc(asin)
-      .get()
-      .then((doc) => doc.exists)
-      .catch((error) => {
-        console.error("Firestore error:", error);
-        return false;
-      });
+    return db.collection("asins").doc(asin).get();
   }
 
-  function addASINButton(asin, exists) {
-    const btn = document.createElement("button");
-    btn.id = "asin-button"; // ID para controle
-    btn.innerHTML = exists ? "✔️ ASIN Cadastrado" : "➕ Add ASIN";
+  function getUserName() {
+    let userName = localStorage.getItem("userName");
+    if (!userName) {
+      userName = prompt("Por favor, insira seu nome:");
+      if (userName) {
+        localStorage.setItem("userName", userName);
+      } else {
+        showToast("Nome do usuário é necessário para adicionar ASINs.", 5000);
+        return null;
+      }
+    }
+    return userName;
+  }
 
-    btn.style.cssText = `
+  function addASINButton(asin, doc) {
+    const btn = document.createElement("button");
+    btn.id = "asin-button";
+
+    if (doc.exists) {
+      // Verifica se "addedBy" existe; se não, usa "pobre" como padrão
+      const addedBy = doc.data().addedBy || "Pobre";
+      btn.innerHTML = `✔️ ASIN Cadastrado por ${addedBy}`;
+      btn.style.background = "#00c400"; // Verde para indicar que já foi cadastrado
+      btn.style.cursor = "not-allowed";
+      btn.disabled = true; // Desabilita o botão, pois o ASIN já existe
+    } else {
+      btn.innerHTML = "➕ Add ASIN";
+      btn.style.background = "#4285f4"; // Azul para indicar que pode ser adicionado
+      btn.style.cursor = "pointer";
+    }
+
+    btn.style.cssText += `
       position: fixed;
       bottom: 20px;
       right: 150px;
       padding: 10px 15px;
-      background: ${exists ? "#00c400" : "#4285f4"};
       color: white;
       border: none;
       border-radius: 5px;
-      cursor: ${exists ? "not-allowed" : "pointer"};
       z-index: 9999;
       font-family: Arial;
       box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     `;
 
-    btn.disabled = exists;
-
     btn.addEventListener("click", () => {
-      if (exists) return;
+      if (doc.exists) return;
+
+      const userName = getUserName();
+      if (!userName) return;
 
       db.collection("asins")
         .doc(asin)
         .set({
           added: new Date().toISOString(),
           url: window.location.href,
+          addedBy: userName,
         })
         .then(() => {
           showToast("ASIN Adicionado com sucesso!");
-          btn.innerHTML = "✔️ ASIN Cadastrado";
-          btn.style.background = "#999";
+          btn.innerHTML = `✔️ ASIN Cadastrado por ${userName}`;
+          btn.style.background = "#00c400";
           btn.style.cursor = "not-allowed";
           btn.disabled = true;
         })
