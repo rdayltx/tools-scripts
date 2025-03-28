@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Amazon ASIN Highlighter (Unregistered)
 // @namespace     https://amazon.com.br/
-// @version       2.7
+// @version       2.8
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @author        DayLight
 // @description   Destaca produtos na Amazon não cadastrados no Firebase, incluindo resultados de busca, produtos relacionados e seções de compra conjunta.
@@ -74,6 +74,14 @@
   }
 
   function main() {
+    // Remove a mensagem "Produto não cadastrado!" se existir
+    const existingWarning = document.querySelector(
+      'div[style*="background-color: rgb(255, 107, 107)"]'
+    );
+    if (existingWarning) {
+      existingWarning.remove();
+    }
+
     // Limpa botões anteriores
     const existingBtns = document.querySelectorAll("#asin-button");
     existingBtns.forEach((btn) => btn.remove());
