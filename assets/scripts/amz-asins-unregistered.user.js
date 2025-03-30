@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Amazon ASIN Highlighter (Unregistered)
 // @namespace     https://amazon.com.br/
-// @version       2.9
+// @version       2.10
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @author        DayLight
 // @description   Destaca produtos na Amazon não cadastrados no Firebase, incluindo resultados de busca, produtos relacionados e seções de compra conjunta.
@@ -132,7 +132,57 @@
       productSelectors.join(", ")
     );
 
+    // Lista de elementos a ignorar
+    const ignoreList = [
+      "#anonCarousel5",
+      "#anonCarousel5 > ol",
+      ".a-carousel-row-inner",
+    ];
+
+    const ignoreSelectors = ignoreList.join(", ");
+    const elementsToIgnore = document.querySelectorAll(ignoreSelectors);
+    const ignoreSet = new Set(elementsToIgnore);
+
     productElements.forEach((productEl) => {
+      // Pula elementos que causam problemas de redimensionamento infinito
+      if (ignoreSet.has(productEl)) {
+        return;
+      }
+
+      // Pula carrosséis e seus elementos filhos para evitar problemas de layout
+      if (
+        productEl.closest("#anonCarousel5") ||
+        productEl.id === "anonCarousel5" ||
+        productEl.parentElement?.id === "anonCarousel5"
+      ) {
+        return;
+      }
+
+      // Verifica se o elemento é um carrossel ou contém um
+      if (
+        productEl.classList.contains("a-carousel-container") ||
+        productEl.querySelector(".a-carousel-container")
+      ) {
+        // Aplica apenas o destaque mínimo necessário, sem alterar layout
+        const asin =
+          productEl.getAttribute("data-asin") ||
+          productEl
+            .getAttribute("data-csa-c-item-id")
+            ?.replace("amzn1.asin.", "");
+
+        if (asin && asin.length === 10) {
+          checkASIN(asin)
+            .then((doc) => {
+              if (!doc.exists) {
+                // Apenas adiciona o ícone de aviso ao elemento
+                addWarningIconOnly(productEl);
+              }
+            })
+            .catch(console.error);
+        }
+        return;
+      }
+
       // Apenas pula se o próprio elemento for um botão de "Adicionar ao carrinho"
       if (
         productEl.classList.contains("a-button") ||
@@ -152,11 +202,6 @@
         (productEl.classList.contains("ax-atc") &&
           productEl.classList.contains("celwidget") &&
           productEl.classList.contains("atc-btn-container"))
-        // (
-        //   productEl.classList.contains("a-column") &&
-        //     productEl.classList.contains("a-span6") &&
-        //     productEl.classList.contains("a-span-last")
-        // )
       ) {
         return; // Pula para o próximo elemento
       }
@@ -172,47 +217,78 @@
         checkASIN(asin)
           .then((doc) => {
             if (!doc.exists) {
-              // Adiciona destaque para produtos não registrados
-              const highlightStyle = {
-                border: "2px solid #ff6b6b",
-                borderRadius: "5px",
-                padding: "5px",
-                position: "relative",
-                boxSizing: "border-box", // Novo estilo adicionado
-                display: "inline-block", // Garante que o elemento respeite as dimensões
-              };
-
-              Object.assign(productEl.style, highlightStyle);
-
-              // Adiciona ícone de aviso
-              if (!productEl.querySelector(".unregistered-warning")) {
-                const warningIcon = document.createElement("div");
-                warningIcon.innerHTML = "⚠️ Não Cadastrado";
-                warningIcon.style.cssText = `
-                background-color: #ff6b6b;
-                color: white;
-                font-size: 10px;
-                padding: 2px 5px;
-                position: absolute;
-                top: -1px; // Ajuste fino de posicionamento
-                right: -1px;
-                border-radius: 0 5px 0 3px;
-                z-index: 10;
-                line-height: 1.2;
-                font-family: Arial,sans-serif;
-              `;
-
-                // Verifica se já não existe um ícone de aviso
-                if (!productEl.querySelector(".unregistered-warning")) {
-                  warningIcon.classList.add("unregistered-warning");
-                  productEl.appendChild(warningIcon);
-                }
-              }
+              // Usa a abordagem mais segura para destacar
+              highlightSafely(productEl);
             }
           })
           .catch(console.error);
       }
     });
+  }
+
+  function addWarningIconOnly(element) {
+    // Verifica se já não existe um ícone de aviso
+    if (!element.querySelector(".unregistered-warning")) {
+      const warningIcon = document.createElement("div");
+      warningIcon.innerHTML = "⚠️ Não Cadastrado";
+      warningIcon.style.cssText = `
+        background-color: #ff6b6b;
+        color: white;
+        font-size: 10px;
+        padding: 2px 5px;
+        position: absolute;
+        top: 0;
+        right: 0;
+        border-radius: 0 5px 0 3px;
+        z-index: 10;
+        line-height: 1.2;
+        font-family: Arial,sans-serif;
+      `;
+
+      warningIcon.classList.add("unregistered-warning");
+
+      // Verifica se o elemento tem position relative ou absolute
+      const position = window.getComputedStyle(element).position;
+      if (position !== "relative" && position !== "absolute") {
+        element.style.position = "relative";
+      }
+
+      element.appendChild(warningIcon);
+    }
+  }
+
+  function highlightSafely(element) {
+    // Verifica a posição atual para não alterar o layout
+    const position = window.getComputedStyle(element).position;
+    if (position !== "relative" && position !== "absolute") {
+      element.style.position = "relative";
+    }
+
+    // Adiciona apenas uma borda, sem alterar o display ou outros atributos
+    element.style.border = "2px solid #ff6b6b";
+    element.style.borderRadius = "5px";
+
+    // Adiciona ícone de aviso
+    if (!element.querySelector(".unregistered-warning")) {
+      const warningIcon = document.createElement("div");
+      warningIcon.innerHTML = "⚠️ Não Cadastrado";
+      warningIcon.style.cssText = `
+        background-color: #ff6b6b;
+        color: white;
+        font-size: 10px;
+        padding: 2px 5px;
+        position: absolute;
+        top: 0;
+        right: 0;
+        border-radius: 0 5px 0 3px;
+        z-index: 10;
+        line-height: 1.2;
+        font-family: Arial,sans-serif;
+      `;
+
+      warningIcon.classList.add("unregistered-warning");
+      element.appendChild(warningIcon);
+    }
   }
 
   function highlightProductIfUnregistered(asin, doc) {
