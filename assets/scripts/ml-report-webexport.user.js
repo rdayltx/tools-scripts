@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          ML WebReport Export
 // @namespace     Pobre's Toolbox
-// @version       4.0
+// @version       4.5
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Ferramentas do analista
 // @author        DayLight
@@ -33,7 +33,43 @@
         opacity: 0;
         transition: opacity 0.5s;
     }
+    .progress-bar-container {
+        position: fixed;
+        top: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 300px;
+        height: 20px;
+        background-color: #f3f3f3;
+        border-radius: 10px;
+        overflow: hidden;
+        z-index: 9999;
+    }
+    .progress-bar {
+        height: 100%;
+        background-color: #4CAF50;
+        width: 0%;
+        transition: width 0.3s;
+    }
+    .progress-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #000;
+        font-size: 12px;
+        font-weight: bold;
+    }
   `;
+
+  // Adiciona os estilos ao documento
+  GM_addStyle(styles);
+
+  // Estado global
+  let dadosColetados = [];
+  let paginaAtual = 1;
+  let totalPaginas = 1;
+  let emProcessoDeColeta = false;
 
   // Função para extrair a data do elemento
   function getDateFromPage() {
@@ -43,42 +79,380 @@
     if (dateElement) {
       return dateElement.textContent.trim();
     }
-    return "data_desconhecida"; // Valor padrão caso o elemento não seja encontrado
+    return "data_desconhecida";
   }
 
-  function coletarDados() {
-    console.log("Coletando dados da página...");
-    const dados = [];
-    const linhas = document.querySelectorAll(
-      "tr.andes-table__row.orders-table__row"
-    );
+  // Função para criar uma barra de progresso
+  function criarBarraProgresso() {
+    // Remove barra existente se houver
+    const barraExistente = document.querySelector(".progress-bar-container");
+    if (barraExistente) {
+      document.body.removeChild(barraExistente);
+    }
 
-    linhas.forEach((linha) => {
-      const categoria = linha
-        .querySelector('[data-title="Categoria do produto"] span')
-        ?.textContent.trim();
-      const produto = linha.querySelector('[data-title="Produtos vendidos"] a');
-      const unidadesVendidas = linha
-        .querySelector('[data-title="Unidades vendidas"] span')
-        ?.textContent.trim();
+    const container = document.createElement("div");
+    container.className = "progress-bar-container";
 
-      if (produto) {
-        dados.push({
-          categoria,
-          produto: produto.textContent.trim(),
-          link: produto.href,
-          unidadesVendidas,
-        });
+    const barra = document.createElement("div");
+    barra.className = "progress-bar";
+
+    const texto = document.createElement("div");
+    texto.className = "progress-text";
+    texto.textContent = "Preparando...";
+
+    container.appendChild(barra);
+    container.appendChild(texto);
+    document.body.appendChild(container);
+
+    return {
+      atualizar: function (porcentagem, mensagem) {
+        barra.style.width = `${porcentagem}%`;
+        texto.textContent = mensagem || `${porcentagem}%`;
+      },
+      remover: function () {
+        document.body.removeChild(container);
+      },
+    };
+  }
+
+  // Aguarda elementos serem carregados na página
+  function esperarElemento(seletor, timeout = 10000) {
+    return new Promise((resolve, reject) => {
+      if (document.querySelector(seletor)) {
+        return resolve(document.querySelector(seletor));
       }
+
+      const observer = new MutationObserver((mutations) => {
+        if (document.querySelector(seletor)) {
+          observer.disconnect();
+          resolve(document.querySelector(seletor));
+        }
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+
+      // Fallback com timeout
+      setTimeout(() => {
+        observer.disconnect();
+        if (document.querySelector(seletor)) {
+          resolve(document.querySelector(seletor));
+        } else {
+          reject(new Error(`Timeout ao esperar elemento: ${seletor}`));
+        }
+      }, timeout);
     });
-    console.log(`Dados coletados: ${dados.length} itens.`);
-    return dados;
+  }
+
+  // Aguarda que a página esteja carregada e estável
+  async function esperarCarregamentoPagina() {
+    // Primeiro espera que a tabela apareça
+    try {
+      await esperarElemento("tr.andes-table__row.orders-table__row", 15000);
+    } catch (e) {
+      console.warn("Tabela não encontrada após espera");
+    }
+
+    // Depois espera um tempo adicional para garantir que a ordenação e outros processos ocorreram
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // Verifica novamente se a tabela está presente
+    if (!document.querySelector("tr.andes-table__row.orders-table__row")) {
+      console.warn(
+        "Tabela não encontrada após carregamento. Página pode estar vazia."
+      );
+    }
+  }
+
+  // Função para ordenar por unidades vendidas de maneira mais confiável
+  async function ordenarPorUnidadesVendidas() {
+    mostrarToast("Verificando ordem da tabela...");
+
+    try {
+      // Espera o cabeçalho da tabela aparecer
+      const cabecalhoUnidades = await esperarElemento(
+        'th[id*="head-header-quantity"] button',
+        10000
+      );
+
+      // Verifica se já está ordenado corretamente
+      const isDescending = cabecalhoUnidades
+        .closest("th")
+        .classList.contains("andes-table__header--sorted-desc");
+
+      if (isDescending) {
+        console.log(
+          "Tabela já está ordenada por unidades vendidas (decrescente)"
+        );
+        return;
+      }
+
+      // Se não estiver ordenado, clica no cabeçalho
+      mostrarToast("Ordenando por unidades vendidas...");
+      cabecalhoUnidades.click();
+
+      // Espera um pouco e verifica novamente
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Verifica se agora está ordenado corretamente
+      const isNowDescending = cabecalhoUnidades
+        .closest("th")
+        .classList.contains("andes-table__header--sorted-desc");
+
+      // Se ainda não estiver ordenado corretamente, clica novamente
+      if (!isNowDescending) {
+        console.log("Clicando novamente para garantir ordem decrescente");
+        cabecalhoUnidades.click();
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+
+      mostrarToast("Tabela ordenada com sucesso!");
+      console.log("Ordenação concluída");
+    } catch (error) {
+      console.error("Erro ao ordenar tabela:", error);
+      mostrarToast("Erro ao ordenar tabela, continuando sem ordenação.");
+    }
+  }
+
+  // Função para detectar o número total de páginas
+  function detectarTotalPaginas() {
+    try {
+      // Tenta encontrar o último botão numérico de paginação
+      const botoesPaginacao = document.querySelectorAll(
+        ".andes-pagination__button:not(.andes-pagination__button--next) a"
+      );
+
+      if (botoesPaginacao.length === 0) {
+        return 1; // Se não há botões, assume que é apenas uma página
+      }
+
+      // Encontra o maior número de página
+      let maxPage = 1;
+      for (let i = 0; i < botoesPaginacao.length; i++) {
+        const pageText = botoesPaginacao[i].textContent.trim();
+        const pageNum = parseInt(pageText, 10);
+        if (!isNaN(pageNum) && pageNum > maxPage) {
+          maxPage = pageNum;
+        }
+      }
+
+      return maxPage;
+    } catch (error) {
+      console.error("Erro ao detectar total de páginas:", error);
+      return 1; // Fallback para 1 página em caso de erro
+    }
+  }
+
+  // Função para coletar dados da página atual de forma mais robusta
+  function coletarDados() {
+    try {
+      console.log("Coletando dados da página atual...");
+      const dados = [];
+
+      // Seleciona todas as linhas da tabela
+      const linhas = document.querySelectorAll(
+        "tr.andes-table__row.orders-table__row"
+      );
+      console.log(`Encontradas ${linhas.length} linhas na tabela.`);
+
+      if (linhas.length === 0) {
+        console.warn("Nenhuma linha encontrada na tabela!");
+        // Pode tirar um screenshot ou salvar o HTML atual para debug
+      }
+
+      linhas.forEach((linha, index) => {
+        try {
+          const categoriaElement = linha.querySelector(
+            '[data-title="Categoria do produto"] span'
+          );
+          const produtoElement = linha.querySelector(
+            '[data-title="Produtos vendidos"] a'
+          );
+          const unidadesElement = linha.querySelector(
+            '[data-title="Unidades vendidas"] span'
+          );
+          const ganhoElement = linha.querySelector(
+            '[data-title="Ganhos"] .andes-money-amount'
+          );
+
+          if (!produtoElement) {
+            console.warn(`Produto não encontrado na linha ${index + 1}`);
+            return;
+          }
+
+          const categoria = categoriaElement
+            ? categoriaElement.textContent.trim()
+            : "Categoria não encontrada";
+          const produto = produtoElement.textContent.trim();
+          const link = produtoElement.href;
+          const unidadesVendidas = unidadesElement
+            ? unidadesElement.textContent.trim()
+            : "0";
+          const ganho = ganhoElement
+            ? ganhoElement.getAttribute("aria-label") || "Valor não encontrado"
+            : "Valor não encontrado";
+
+          dados.push({
+            categoria,
+            produto,
+            link,
+            unidadesVendidas,
+            ganho,
+          });
+        } catch (error) {
+          console.error(`Erro ao processar linha ${index + 1}:`, error);
+        }
+      });
+
+      console.log(
+        `Dados coletados na página ${paginaAtual}: ${dados.length} itens.`
+      );
+      return dados;
+    } catch (error) {
+      console.error("Erro ao coletar dados:", error);
+      return [];
+    }
+  }
+
+  // Função para navegar para a próxima página
+  async function navegarParaProximaPagina() {
+    try {
+      const botaoProximaPagina = document.querySelector(
+        ".andes-pagination__button--next a"
+      );
+
+      if (!botaoProximaPagina) {
+        console.log(
+          "Botão de próxima página não encontrado. Pode ser a última página."
+        );
+        return false;
+      }
+
+      console.log(`Navegando para a página ${paginaAtual + 1}...`);
+      botaoProximaPagina.click();
+
+      // Aguarda o carregamento da nova página
+      await esperarCarregamentoPagina();
+
+      paginaAtual++;
+      console.log(`Agora na página ${paginaAtual}`);
+      return true;
+    } catch (error) {
+      console.error("Erro ao navegar para próxima página:", error);
+      return false;
+    }
+  }
+
+  // Função principal de coleta de dados de todas as páginas
+  async function iniciarColeta() {
+    if (emProcessoDeColeta) {
+      mostrarToast("Uma coleta já está em andamento...");
+      return;
+    }
+
+    emProcessoDeColeta = true;
+    dadosColetados = [];
+    paginaAtual = 1;
+
+    const barraProgresso = criarBarraProgresso();
+
+    try {
+      // Primeiro ordenar a tabela
+      await ordenarPorUnidadesVendidas();
+
+      // Aguarda carregamento após ordenação
+      await esperarCarregamentoPagina();
+
+      // Detecta o total de páginas
+      totalPaginas = detectarTotalPaginas();
+      console.log(`Total de páginas detectadas: ${totalPaginas}`);
+
+      // Loop principal de coleta
+      let continuarColeta = true;
+
+      while (continuarColeta && paginaAtual <= totalPaginas) {
+        // Atualiza a barra de progresso
+        const porcentagem = Math.round((paginaAtual / totalPaginas) * 100);
+        barraProgresso.atualizar(
+          porcentagem,
+          `Coletando página ${paginaAtual} de ${totalPaginas}`
+        );
+
+        // Coleta dados da página atual
+        await esperarCarregamentoPagina();
+        const dadosPagina = coletarDados();
+
+        // Se não encontrou dados, tenta novamente
+        if (dadosPagina.length === 0) {
+          console.warn(
+            `Nenhum dado encontrado na página ${paginaAtual}. Tentando novamente...`
+          );
+
+          // Aguarda mais um pouco e tenta de novo
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+          const segundaTentativa = coletarDados();
+
+          if (segundaTentativa.length === 0) {
+            console.warn(
+              `Segunda tentativa falhou. Continuando para próxima página...`
+            );
+          } else {
+            console.log(
+              `Segunda tentativa recuperou ${segundaTentativa.length} itens.`
+            );
+            dadosColetados.push(...segundaTentativa);
+          }
+        } else {
+          dadosColetados.push(...dadosPagina);
+        }
+
+        // Verifica se é a última página
+        if (paginaAtual >= totalPaginas) {
+          console.log("Chegou à última página.");
+          continuarColeta = false;
+        } else {
+          // Navega para a próxima página
+          const navegacaoSucesso = await navegarParaProximaPagina();
+
+          if (!navegacaoSucesso) {
+            console.warn(
+              "Falha ao navegar para a próxima página. Encerrando coleta."
+            );
+            continuarColeta = false;
+          }
+        }
+      }
+
+      // Finaliza a coleta
+      barraProgresso.atualizar(100, "Coleta finalizada!");
+      console.log(
+        `Coleta finalizada. Total de dados: ${dadosColetados.length}`
+      );
+
+      // Salva os dados
+      if (dadosColetados.length > 0) {
+        mostrarToast(
+          `Coleta finalizada! ${dadosColetados.length} itens coletados.`
+        );
+        salvarPagina(dadosColetados);
+      } else {
+        mostrarToast("Coleta finalizada, mas nenhum dado foi encontrado!");
+      }
+    } catch (error) {
+      console.error("Erro durante a coleta:", error);
+      mostrarToast("Erro durante a coleta de dados!");
+    } finally {
+      emProcessoDeColeta = false;
+      setTimeout(() => barraProgresso.remover(), 3000);
+    }
   }
 
   function salvarPagina(dados) {
     console.log("Gerando arquivo HTML para download...");
-    const dateText = getDateFromPage(); // Obtém o texto da data
-    const fileName = `dados_coletados_${dateText.replace(/\s/g, "_")}.html`; // Cria o nome do arquivo dinâmico
+    const dateText = getDateFromPage();
+    const fileName = `dados_coletados_${dateText.replace(/\s/g, "_")}.html`;
 
     let conteudo = `<!DOCTYPE html>
       <html>
@@ -91,6 +465,8 @@
               th, td { border: 1px solid black; padding: 8px; text-align: left; }
               th { background-color: #f2f2f2; }
               .highlight { background-color: rgba(143, 72, 236, 0.64); font-weight: bold; }
+              .stats { margin-bottom: 20px; padding: 10px; background-color: #f9f9f9; border-radius: 5px; }
+              .category-group { margin-bottom: 10px; }
           </style>
           <script>
               function performSearch() {
@@ -127,26 +503,83 @@
                       }
                   });
               }
+
+              function toggleCategoryStats() {
+                  const statsElement = document.getElementById('category-stats');
+                  if (statsElement.style.display === 'none') {
+                      statsElement.style.display = 'block';
+                  } else {
+                      statsElement.style.display = 'none';
+                  }
+              }
           </script>
       </head>
       <body>
           <h1>Dados Coletados da Tabela - ${dateText}</h1>
-          <input type="text" id="searchBox" onkeyup="performSearch()" placeholder="Buscar produto..." style="margin-bottom: 10px; padding: 5px; width: 200px;">
+          <div class="stats">
+              <h2>Estatísticas Gerais</h2>
+              <p>Total de produtos: <strong>${dados.length}</strong></p>
+              <p>Total de unidades vendidas: <strong>${dados.reduce(
+                (total, item) =>
+                  total + parseInt(item.unidadesVendidas || 0, 10),
+                0
+              )}</strong></p>
+              <button onclick="toggleCategoryStats()">Mostrar/Ocultar Estatísticas por Categoria</button>
+
+              <div id="category-stats" style="display: none;">
+                  <h3>Produtos por Categoria</h3>`;
+
+    // Agrupa por categoria
+    const categorias = {};
+    dados.forEach((item) => {
+      const categoria = item.categoria || "Sem categoria";
+      if (!categorias[categoria]) {
+        categorias[categoria] = {
+          count: 0,
+          unidades: 0,
+        };
+      }
+      categorias[categoria].count++;
+      categorias[categoria].unidades += parseInt(
+        item.unidadesVendidas || 0,
+        10
+      );
+    });
+
+    // Adiciona estatísticas por categoria
+    Object.keys(categorias)
+      .sort()
+      .forEach((categoria) => {
+        conteudo += `
+      <div class="category-group">
+        <p><strong>${categoria}</strong>: ${categorias[categoria].count} produtos, ${categorias[categoria].unidades} unidades vendidas</p>
+      </div>`;
+      });
+
+    conteudo += `
+              </div>
+          </div>
+
+          <input type="text" id="searchBox" onkeyup="performSearch()" placeholder="Buscar produto..." style="margin-bottom: 10px; padding: 5px; width: 300px;">
           <table id="data-table">
               <thead>
                 <tr>
                   <th>Categoria</th>
                   <th>Produto</th>
                   <th>Un. Vendidas</th>
+                  <th>Ganhos</th>
                 </tr>
               </thead>
               <tbody>`;
 
     dados.forEach((item) => {
       conteudo += `<tr>
-              <td>${item.categoria}</td>
-              <td><a href="${item.link}" target="_blank">${item.produto}</a></td>
-              <td>${item.unidadesVendidas}</td>
+              <td>${item.categoria || ""}</td>
+              <td><a href="${item.link}" target="_blank">${
+        item.produto
+      }</a></td>
+              <td>${item.unidadesVendidas || ""}</td>
+              <td>${item.ganho || ""}</td>
           </tr>`;
     });
 
@@ -156,63 +589,21 @@
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = fileName; // Usa o nome do arquivo dinâmico
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    console.log(`Arquivo HTML baixado com sucesso: ${fileName}`);
-  }
-
-  function navegarPelasPaginas() {
-    const dadosColetados = [];
-    let paginaAtual = 1;
-
-    const paginacaoLinks = document.querySelectorAll(
-      ".andes-pagination__button a"
-    );
-    const totalPaginas = parseInt(
-      paginacaoLinks[paginacaoLinks.length - 2].textContent.trim(),
-      10
-    );
-
-    console.log(`Total de páginas encontradas: ${totalPaginas}`);
-
-    function proximaPagina() {
-      console.log(`Coletando dados da página ${paginaAtual}...`);
-      setTimeout(() => {
-        const dados = coletarDados();
-
-        if (dados.length === 0) {
-          console.log("Nenhum dado coletado nesta página. Finalizando coleta.");
-          salvarPagina(dadosColetados);
-          return;
-        }
-
-        dadosColetados.push(...dados);
-
-        const proximaPaginaButton = document.querySelector(
-          ".andes-pagination__button--next a"
-        );
-        if (proximaPaginaButton && paginaAtual < totalPaginas) {
-          console.log(
-            `Página ${paginaAtual} coletada. Navegando para a próxima...`
-          );
-          paginaAtual++;
-          proximaPaginaButton.click();
-          setTimeout(proximaPagina, 3000);
-        } else {
-          console.log("Coleta finalizada. Baixando o arquivo HTML...");
-          salvarPagina(dadosColetados);
-        }
-      }, 3000);
-    }
-
-    proximaPagina();
+    console.log(`Arquivo HTML gerado com sucesso: ${fileName}`);
   }
 
   function mostrarToast(mensagem) {
+    const toastExistente = document.querySelector(".toast");
+    if (toastExistente) {
+      document.body.removeChild(toastExistente);
+    }
+
     const toast = document.createElement("div");
     toast.textContent = mensagem;
     toast.className = "toast";
@@ -225,7 +616,9 @@
     setTimeout(() => {
       toast.style.opacity = "0";
       setTimeout(() => {
-        document.body.removeChild(toast);
+        if (document.body.contains(toast)) {
+          document.body.removeChild(toast);
+        }
       }, 500);
     }, 3000);
   }
@@ -335,21 +728,22 @@
     document.body.appendChild(modal);
   }
 
-  function checkAndAutoExport() {
+  async function checkAndAutoExport() {
     if (localStorage.getItem("ml_should_export") === "true") {
       localStorage.removeItem("ml_should_export");
-      setTimeout(() => {
-        const dados = [];
-        mostrarToast("Coleta iniciada!");
+      setTimeout(async () => {
         try {
-          navegarPelasPaginas();
+          mostrarToast("Iniciando coleta automática...");
+          await iniciarColeta();
         } catch (error) {
-          alert(`Erro durante a extração: ${error.message}`);
+          console.error("Erro durante a exportação automática:", error);
+          mostrarToast(`Erro durante a coleta: ${error.message}`);
         }
       }, 2000);
     }
   }
 
+  // Cria o botão de coleta
   const botaoColeta = document.createElement("button");
   botaoColeta.textContent = "Iniciar Coleta";
   botaoColeta.style.cssText = `
@@ -366,8 +760,33 @@
     z-index: 9999;
   `;
 
-  botaoColeta.addEventListener("click", createDateModal);
-  document.body.appendChild(botaoColeta);
+  botaoColeta.addEventListener("click", () => {
+    // Em vez de abrir o modal, inicia diretamente a coleta na página atual
+    iniciarColeta();
+  });
 
+  // Cria um botão separado para a seleção de data
+  const botaoData = document.createElement("button");
+  botaoData.textContent = "Selecionar Data";
+  botaoData.style.cssText = `
+    position: fixed;
+    top: 10px;
+    right: 130px;
+    padding: 10px;
+    font-size: 16px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 9999;
+  `;
+
+  botaoData.addEventListener("click", createDateModal);
+
+  document.body.appendChild(botaoColeta);
+  document.body.appendChild(botaoData);
+
+  // Verifica se deve iniciar uma exportação automática
   checkAndAutoExport();
 })();
