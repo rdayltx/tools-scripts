@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          ML Double Verify WebReport Export
 // @namespace     Pobre's Toolbox
-// @version       4.2
+// @version       1.2
 // @icon          https://raw.githubusercontent.com/rdayltx/tools-scripts/main/assets/pobre_tools.ico
 // @description   Ferramentas do analista
 // @author        DayLight
@@ -39,7 +39,7 @@
         left: 50%;
         transform: translateX(-50%);
         width: 300px;
-        height: 20px;
+        height: 35px;
         background-color: #f3f3f3;
         border-radius: 10px;
         overflow: hidden;
@@ -439,24 +439,90 @@
     }
   }
 
-  // Função para comparar produtos e encontrar os que faltam
-  function encontrarProdutosFaltantes(dadosOriginais, dadosNovos) {
-    const produtosOriginais = new Map();
+  // Função para eliminar duplicatas e consolidar dados
+  function consolidarDados(dadosOriginais, dadosNovos) {
+    // Cria um Map para armazenar todos os produtos pelo link
+    const todosProdutos = new Map();
 
-    // Armazena os dados originais em um mapa, usando o link como chave
+    // Primeiro adiciona todos os dados originais
     dadosOriginais.forEach((item) => {
-      produtosOriginais.set(item.link, item);
+      todosProdutos.set(item.link, item);
     });
 
-    // Encontra produtos nos novos dados que não estão nos originais
-    const produtosFaltantes = dadosNovos.filter(
-      (item) => !produtosOriginais.has(item.link)
-    );
+    // Contador para produtos faltantes (não presentes nos dados originais)
+    let produtosFaltantes = 0;
+    // Contador para produtos atualizados
+    let produtosAtualizados = 0;
+
+    // Processa os novos dados
+    dadosNovos.forEach((item) => {
+      if (!todosProdutos.has(item.link)) {
+        // É um produto novo que não existia na primeira coleta
+        todosProdutos.set(item.link, item);
+        produtosFaltantes++;
+      } else {
+        // Produto já existe, verifica se precisa atualizar informações
+        const itemExistente = todosProdutos.get(item.link);
+        let atualizado = false;
+
+        // Se as unidades vendidas forem diferentes, usa o valor maior
+        if (
+          parseInt(item.unidadesVendidas || 0, 10) >
+          parseInt(itemExistente.unidadesVendidas || 0, 10)
+        ) {
+          itemExistente.unidadesVendidas = item.unidadesVendidas;
+          atualizado = true;
+        }
+
+        // Se o valor de ganhos estiver disponível na nova coleta, mas não na original
+        if (
+          (!itemExistente.ganho ||
+            itemExistente.ganho === "Valor não encontrado") &&
+          item.ganho &&
+          item.ganho !== "Valor não encontrado"
+        ) {
+          itemExistente.ganho = item.ganho;
+          atualizado = true;
+        }
+
+        if (atualizado) {
+          produtosAtualizados++;
+        }
+      }
+    });
+
+    // Remove possíveis duplicatas que possam ter o mesmo texto mas links diferentes (raro mas possível)
+    // Agrupa por nome do produto
+    const nomesUnicos = new Map();
+    todosProdutos.forEach((value, key) => {
+      const nomeProduto = value.produto;
+
+      // Se ainda não temos este nome de produto, ou este tem mais unidades vendidas, mantém este
+      if (
+        !nomesUnicos.has(nomeProduto) ||
+        parseInt(value.unidadesVendidas || 0, 10) >
+          parseInt(nomesUnicos.get(nomeProduto).unidadesVendidas || 0, 10)
+      ) {
+        nomesUnicos.set(nomeProduto, value);
+      }
+    });
+
+    // Converte o map de volta para array
+    const dadosConsolidados = Array.from(nomesUnicos.values());
 
     console.log(
-      `Encontrados ${produtosFaltantes.length} produtos faltantes na segunda coleta`
+      `Consolidação concluída: ${produtosFaltantes} produtos faltantes encontrados, ${produtosAtualizados} produtos atualizados`
     );
-    return produtosFaltantes;
+    console.log(
+      `Total após remoção de duplicatas: ${dadosConsolidados.length} de ${todosProdutos.size} itens`
+    );
+
+    return {
+      dadosConsolidados,
+      produtosFaltantes,
+      produtosAtualizados,
+      duplicatasRemovidas: todosProdutos.size - dadosConsolidados.length,
+    };
   }
 
   // Função principal de coleta de dados de todas as páginas
@@ -605,26 +671,36 @@
           }
         }
 
-        // Encontra produtos que faltaram na primeira coleta
-        const produtosFaltantes = encontrarProdutosFaltantes(
+        // Consolida os dados das duas coletas
+        const resultado = consolidarDados(
           dadosUnidadesVendidas,
           dadosColetados
         );
+        const dadosFinais = resultado.dadosConsolidados;
 
-        // Adiciona produtos faltantes ao conjunto final
-        if (produtosFaltantes.length > 0) {
-          console.log(
-            "Produtos faltantes encontrados na verificação por ganhos:",
-            produtosFaltantes
-          );
-          dadosUnidadesVendidas.push(...produtosFaltantes);
-          mostrarToast(
-            `Encontrados ${produtosFaltantes.length} produtos adicionais!`
-          );
+        // Informa o usuário sobre o resultado
+        if (
+          resultado.produtosFaltantes > 0 ||
+          resultado.produtosAtualizados > 0
+        ) {
+          console.log("Consolidação de dados realizada:", resultado);
+
+          let mensagem = "";
+          if (resultado.produtosFaltantes > 0) {
+            mensagem += `Encontrados ${resultado.produtosFaltantes} produtos adicionais! `;
+          }
+          if (resultado.produtosAtualizados > 0) {
+            mensagem += `${resultado.produtosAtualizados} produtos atualizados. `;
+          }
+          if (resultado.duplicatasRemovidas > 0) {
+            mensagem += `${resultado.duplicatasRemovidas} duplicatas removidas.`;
+          }
+
+          mostrarToast(mensagem);
         }
 
         // Ordena todos os dados por unidades vendidas para manter consistência
-        dadosUnidadesVendidas.sort(
+        dadosFinais.sort(
           (a, b) =>
             parseInt(b.unidadesVendidas || 0, 10) -
             parseInt(a.unidadesVendidas || 0, 10)
@@ -632,16 +708,14 @@
 
         // Finaliza a coleta com todos os dados
         barraProgresso.atualizar(100, "Coleta finalizada!");
-        console.log(
-          `Coleta finalizada. Total de dados: ${dadosUnidadesVendidas.length}`
-        );
+        console.log(`Coleta finalizada. Total de dados: ${dadosFinais.length}`);
 
         // Salva os dados
-        if (dadosUnidadesVendidas.length > 0) {
+        if (dadosFinais.length > 0) {
           mostrarToast(
-            `Coleta finalizada! ${dadosUnidadesVendidas.length} itens coletados no total.`
+            `Coleta finalizada! ${dadosFinais.length} itens coletados no total.`
           );
-          salvarPagina(dadosUnidadesVendidas);
+          salvarPagina(dadosFinais);
         } else {
           mostrarToast("Coleta finalizada, mas nenhum dado foi encontrado!");
         }
@@ -666,6 +740,26 @@
     const dateText = getDateFromPage();
     const fileName = `dados_coletados_${dateText.replace(/\s/g, "_")}.html`;
 
+    // Calcula alguns dados para estatísticas
+    const totalUnidadesVendidas = dados.reduce(
+      (total, item) => total + parseInt(item.unidadesVendidas || 0, 10),
+      0
+    );
+
+    // Extrai o valor numérico dos ganhos para cálculos
+    const extrairValorGanhos = (ganhoStr) => {
+      if (!ganhoStr) return 0;
+      const match = ganhoStr.match(/(\d+)[.,](\d+)/);
+      if (match) {
+        return parseFloat(`${match[1]}.${match[2]}`);
+      }
+      return 0;
+    };
+
+    const totalGanhos = dados.reduce((total, item) => {
+      return total + extrairValorGanhos(item.ganho);
+    }, 0);
+
     let conteudo = `<!DOCTYPE html>
       <html>
       <head>
@@ -675,10 +769,17 @@
               body { font-family: Arial, sans-serif; margin: 20px; }
               table { width: 100%; border-collapse: collapse; }
               th, td { border: 1px solid black; padding: 8px; text-align: left; }
-              th { background-color: #f2f2f2; }
+              th { background-color: #f2f2f2; cursor: pointer; }
               .highlight { background-color: rgba(143, 72, 236, 0.64); font-weight: bold; }
               .stats { margin-bottom: 20px; padding: 10px; background-color: #f9f9f9; border-radius: 5px; }
               .category-group { margin-bottom: 10px; }
+              .search-container { margin-bottom: 20px; }
+              .search-container input { padding: 8px; width: 300px; border-radius: 4px; border: 1px solid #ccc; }
+              .search-container button { padding: 8px 15px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px; }
+              .filters { margin-bottom: 15px; display: flex; gap: 15px; }
+              .sort-arrow { margin-left: 5px; }
+              .sort-asc:after { content: "▲"; }
+              .sort-desc:after { content: "▼"; }
           </style>
           <script>
               function performSearch() {
@@ -701,8 +802,9 @@
                       const productCell = row.querySelector('td:nth-child(2)');
                       const productLink = productCell.querySelector('a');
                       const productText = productLink ? productLink.textContent.toLowerCase() : '';
+                      const categoryText = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
 
-                      if (productText.includes(searchText)) {
+                      if (productText.includes(searchText) || categoryText.includes(searchText)) {
                           row.style.display = '';
                           if (productLink) {
                               productLink.innerHTML = productLink.textContent.replace(
@@ -724,6 +826,72 @@
                       statsElement.style.display = 'none';
                   }
               }
+              
+              // Funções para ordenação da tabela
+              function sortTable(n) {
+                  let table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+                  table = document.getElementById("data-table");
+                  switching = true;
+                  // Começa com ordem ascendente
+                  dir = "asc";
+                  
+                  // Remove classe sort-asc/sort-desc de todos os headers
+                  const headers = table.querySelectorAll("th");
+                  headers.forEach(header => {
+                      header.classList.remove("sort-asc", "sort-desc");
+                  });
+                  
+                  while (switching) {
+                      switching = false;
+                      rows = table.rows;
+                      
+                      for (i = 1; i < (rows.length - 1); i++) {
+                          shouldSwitch = false;
+                          x = rows[i].getElementsByTagName("TD")[n];
+                          y = rows[i + 1].getElementsByTagName("TD")[n];
+                          
+                          let xValue, yValue;
+                          
+                          // Determina o tipo de coluna e extrai os valores corretamente
+                          if (n === 2) { // Coluna de unidades vendidas
+                              xValue = parseInt(x.textContent.trim()) || 0;
+                              yValue = parseInt(y.textContent.trim()) || 0;
+                          } else if (n === 3) { // Coluna de ganhos
+                              xValue = parseFloat(x.textContent.replace(/[^0-9,.]/g, '').replace(',', '.')) || 0;
+                              yValue = parseFloat(y.textContent.replace(/[^0-9,.]/g, '').replace(',', '.')) || 0;
+                          } else { // Colunas de texto
+                              xValue = x.textContent.toLowerCase();
+                              yValue = y.textContent.toLowerCase();
+                          }
+                          
+                          if (dir == "asc") {
+                              if (xValue > yValue) {
+                                  shouldSwitch = true;
+                                  break;
+                              }
+                          } else if (dir == "desc") {
+                              if (xValue < yValue) {
+                                  shouldSwitch = true;
+                                  break;
+                              }
+                          }
+                      }
+                      
+                      if (shouldSwitch) {
+                          rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                          switching = true;
+                          switchcount++;
+                      } else {
+                          if (switchcount == 0 && dir == "asc") {
+                              dir = "desc";
+                              switching = true;
+                          }
+                      }
+                  }
+                  
+                  // Adiciona classe para mostrar ícone de ordenação
+                  headers[n].classList.add(dir === "asc" ? "sort-asc" : "sort-desc");
+              }
           </script>
       </head>
       <body>
@@ -731,11 +899,12 @@
           <div class="stats">
               <h2>Estatísticas Gerais</h2>
               <p>Total de produtos: <strong>${dados.length}</strong></p>
-              <p>Total de unidades vendidas: <strong>${dados.reduce(
-                (total, item) =>
-                  total + parseInt(item.unidadesVendidas || 0, 10),
-                0
+              <p>Total de unidades vendidas: <strong>${totalUnidadesVendidas.toLocaleString(
+                "pt-BR"
               )}</strong></p>
+              <p>Total de ganhos estimados: <strong>R$ ${totalGanhos
+                .toFixed(2)
+                .replace(".", ",")}</strong></p>
               <button onclick="toggleCategoryStats()">Mostrar/Ocultar Estatísticas por Categoria</button>
               
               <div id="category-stats" style="display: none;">
@@ -749,6 +918,7 @@
         categorias[categoria] = {
           count: 0,
           unidades: 0,
+          ganhos: 0,
         };
       }
       categorias[categoria].count++;
@@ -756,30 +926,41 @@
         item.unidadesVendidas || 0,
         10
       );
+      categorias[categoria].ganhos += extrairValorGanhos(item.ganho);
+    });
+
+    // Ordena categorias por unidades vendidas (decrescente)
+    const categoriasOrdenadas = Object.entries(categorias).sort((a, b) => {
+      return b[1].unidades - a[1].unidades;
     });
 
     // Adiciona estatísticas por categoria
-    Object.keys(categorias)
-      .sort()
-      .forEach((categoria) => {
-        conteudo += `
+    categoriasOrdenadas.forEach(([categoria, stats]) => {
+      conteudo += `
       <div class="category-group">
-        <p><strong>${categoria}</strong>: ${categorias[categoria].count} produtos, ${categorias[categoria].unidades} unidades vendidas</p>
+        <p><strong>${categoria}</strong>: ${
+        stats.count
+      } produtos, ${stats.unidades.toLocaleString("pt-BR")} unidades vendidas, 
+           R$ ${stats.ganhos.toFixed(2).replace(".", ",")} em ganhos</p>
       </div>`;
-      });
+    });
 
     conteudo += `
               </div>
           </div>
           
-          <input type="text" id="searchBox" onkeyup="performSearch()" placeholder="Buscar produto..." style="margin-bottom: 10px; padding: 5px; width: 300px;">
+          <div class="search-container">
+            <input type="text" id="searchBox" onkeyup="performSearch()" placeholder="Buscar por produto ou categoria...">
+            <button onclick="performSearch()">Buscar</button>
+          </div>
+          
           <table id="data-table">
               <thead>
                 <tr>
-                  <th>Categoria</th>
-                  <th>Produto</th>
-                  <th>Un. Vendidas</th>
-                  <th>Ganhos</th>
+                  <th onclick="sortTable(0)">Categoria <span class="sort-arrow"></span></th>
+                  <th onclick="sortTable(1)">Produto <span class="sort-arrow"></span></th>
+                  <th onclick="sortTable(2)" class="sort-desc">Un. Vendidas <span class="sort-arrow"></span></th>
+                  <th onclick="sortTable(3)">Ganhos <span class="sort-arrow"></span></th>
                 </tr>
               </thead>
               <tbody>`;
